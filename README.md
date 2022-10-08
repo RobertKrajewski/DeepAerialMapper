@@ -19,7 +19,7 @@ The algorithm consists of 4 parts.
 
 ## Tutorial
 
-You can find the detailed tutorial [HERE](docs\tutorial.md)
+You can find the detailed tutorial [HERE](docs/tutorial.md)
 
 ### Get Started
 
