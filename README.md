@@ -1,4 +1,4 @@
-<p style="text-align:center;"><img src="docs\imgs\DeepAerialMapper_Logo.jpg" width="480px">
+<p align="center"><img src="docs\imgs\DeepAerialMapper_Logo.jpg" width="480px"></p>
 
 <p style="font-weight: bold; text-align:center;">DeepAerialMapper is an open-source project to convert segmentation mask into High-definition map (<i>HD map</i>).</p> <br>
 
