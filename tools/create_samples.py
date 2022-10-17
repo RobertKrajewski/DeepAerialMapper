@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from data_generation.mapping.masks import palette_map, SemanticClass
+from deepaerialmapper.map_creation.masks import palette_map, SemanticClass
 
 
 def show_img(img):

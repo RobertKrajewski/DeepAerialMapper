@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 from typing import Optional, List
 
-from data_generation.mapping.masks import SemanticClass, SegmentationMask
-from classification import classify
+from deepaerialmapper.map_creation.masks import SemanticClass, SegmentationMask
+from deepaerialmapper.classification.symbol import classify
 from loguru import logger
 
 import matplotlib.pyplot as plt

@@ -10,7 +10,7 @@ from enum import Enum
 
 from loguru import logger
 
-from data_generation.mapping.lanemarking import Lanemarking
+from deepaerialmapper.map_creation.lanemarking import Lanemarking
 
 
 class SemanticClass(Enum):
@@ -90,7 +90,7 @@ class ClassMask:
     def show(self, contours=None, lanemarkings=None, background=None, show=True, window_name: str = "",
              random: bool = False) -> Tuple[
         np.ndarray, np.ndarray]:
-        from data_generation.mapping.contour import ContourManager
+        from deepaerialmapper.map_creation.contour import ContourManager
         if isinstance(contours, ContourManager):
             contours = contours.contours
 

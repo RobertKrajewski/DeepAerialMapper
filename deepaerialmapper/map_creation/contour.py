@@ -11,8 +11,8 @@ import itertools
 
 from dataclasses import dataclass
 
-from data_generation.mapping.lanemarking import Lanemarking
-from data_generation.mapping.masks import ClassMask
+from deepaerialmapper.map_creation.lanemarking import Lanemarking
+from deepaerialmapper.map_creation.masks import ClassMask
 
 
 @dataclass

@@ -12,15 +12,15 @@ from typing import Set, FrozenSet, List
 import sys
 import os
 
-from data_generation.mapping.mask_visualizer import MaskVisualizer
+from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 
 sys.path.append(os.getcwd())
 
-from data_generation.mapping.contour import ContourSegment, ContourManager
-from data_generation.mapping.lanemarking import Lanemarking
-from data_generation.mapping.map import Lanelet2Map
-from data_generation.mapping.masks import SegmentationMask, palette_map, SemanticClass
-from data_generation.mapping.symbol import SymbolDetector
+from deepaerialmapper.map_creation.contour import ContourSegment, ContourManager
+from deepaerialmapper.map_creation.lanemarking import Lanemarking
+from deepaerialmapper.export.map import Lanelet2Map
+from deepaerialmapper.map_creation.masks import SegmentationMask, palette_map, SemanticClass
+from deepaerialmapper.map_creation.symbol import SymbolDetector
 
 
 def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: List, skip_lanelets=True,
@@ -204,11 +204,11 @@ def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Post-process semantic segmentation to HDmap")
-    parser.add_argument("--input", default='z_segmentations/uper_best/mask',  # should delete dafulat
+    parser.add_argument("--input",
                         help="location of input segmentation folder.")
-    parser.add_argument("--output", default='HDmap',
-                        help="location where output JSON is saved.")
-    parser.add_argument("--start_map", default=0,  # 2  #should delete dafulat
+    parser.add_argument("--output", default="results/maps/<now>",
+                        help="Location of the root output directory.")
+    parser.add_argument("--start_map", default=0,
                         help="Index of the first image to process")
 
     args = parser.parse_args()
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     if not segmentation_files:
         exit()
 
-    output_dir = "results/maps/<now>"
+    output_dir = args.output
     if "<now>" in output_dir:
         output_dir = output_dir.replace("<now>", datetime.now().strftime("%y%m%d_%H%M%S"))
     output_dir = Path(output_dir)
