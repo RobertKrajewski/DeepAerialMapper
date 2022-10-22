@@ -7,13 +7,14 @@ import sys
 from typing import List, Tuple
 
 import tqdm
+import yaml
 
 from tests.test_corner_split import find_split_points
 
 sys.path.insert(0, r'.')
 from data_generation.mapping.contour import ContourSegment, ContourManager
 from data_generation.mapping.mapping_error import resample_polygon, evaluate_map, evaluate_dataset
-from data_generation.mapping.masks import palette_map, SegmentationMask, SemanticClass, ClassMask
+from data_generation.mapping.masks import SegmentationMask, SemanticClass, ClassMask
 from data_generation.mapping.symbol import SymbolDetector
 from data_generation.mapping.tool_kit import compute_pca
 
@@ -26,6 +27,11 @@ def test_compute_pca():
 
 
 def test_symbol_detector(image_path, *ori_path):
+    config_dir = 'configs/mask/demo.yaml'
+    with open(config_dir, 'r') as f:
+        config = yaml.safe_load(f)
+    palette_map = {SemanticClass[i["type"]]: i['palette'] for i in config['class']}
+
     # Load synthetic image with symbols on it
     # image_path = "data/synth/synthetic3.png"
     # image_path = "data\synth\synthetic3.png"

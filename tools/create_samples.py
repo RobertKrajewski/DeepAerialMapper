@@ -1,6 +1,13 @@
 import numpy as np
 import cv2
-from deepaerialmapper.map_creation.masks import palette_map, SemanticClass
+import yaml
+from deepaerialmapper.map_creation.masks import SemanticClass
+
+
+config_dir = 'configs/mask/demo.yaml'
+with open(config_dir, 'r') as f:
+    config = yaml.safe_load(f)
+palette_map = {SemanticClass[i["type"]]: i['palette'] for i in config['class']}
 
 
 def show_img(img):

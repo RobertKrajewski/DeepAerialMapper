@@ -11,15 +11,16 @@ from loguru import logger
 from typing import Set, FrozenSet, List
 import sys
 import os
-
-from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
+import yaml
 
 sys.path.append(os.getcwd())
+from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
+
 
 from deepaerialmapper.map_creation.contour import ContourSegment, ContourManager
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 from deepaerialmapper.export.map import Lanelet2Map
-from deepaerialmapper.map_creation.masks import SegmentationMask, palette_map, SemanticClass
+from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass
 from deepaerialmapper.map_creation.symbol import SymbolDetector
 
 
@@ -233,6 +234,10 @@ if __name__ == "__main__":
     script_path = Path(__file__).resolve()
     shutil.copyfile(script_path, output_dir / script_path.name)
 
+    config_dir = 'configs/mask/config.yaml'
+    with open(config_dir, 'r') as f:
+        config = yaml.safe_load(f)
+
     meta_file = input_dir / "meta.json"
     if meta_file.exists():
         shutil.copyfile(meta_file, output_dir / meta_file.name)
@@ -250,6 +255,8 @@ if __name__ == "__main__":
         ignore = {}
 
     selected_segmentation_files = segmentation_files[int(args.start_map):]
+
+    palette_map = {SemanticClass[i["type"]]: i['palette'] for i in config['class']}
 
     for i_segmentation_file, segmentation_file in enumerate(selected_segmentation_files):
         logger.info(

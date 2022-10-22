@@ -1,0 +1,26 @@
+class:
+  - type: BLACK
+    priority: 0
+    palette: [0, 0, 0]
+  - type: ROAD
+    priority: 1
+    palette: [128, 128, 128]
+  - type: VEGETATION
+    priority: 2
+    palette: [0, 255, 0]
+  - type: TRAFFICISLAND
+    priority: 3
+    palette: [153, 51, 255]
+  - type: SIDEWALK
+    priority: 4
+    palette: [0, 0, 255]
+  - type: PARKING
+    priority: 5
+    palette: [255, 255, 0]
+  - type: SYMBOL
+    priority: 6
+    palette: [255, 0, 0]
+  - type: LANEMARKING
+    priority: 7
+    palette: [0, 128, 128]
+
