@@ -127,7 +127,7 @@ def predict(model, image: np.ndarray, targets: list,
         ToTensorV2(),
     ])
     model.eval()
-    if device == 'cuda':
+    if device.type == 'cuda':
         model.cuda()
 
     with torch.no_grad():

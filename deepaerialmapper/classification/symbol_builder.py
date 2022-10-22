@@ -4,10 +4,6 @@ import glob
 import random
 
 from loguru import logger
-import matplotlib.pyplot as plt
-import matplotlib
-
-matplotlib.use('TkAgg')
 
 
 def flatten(t):
