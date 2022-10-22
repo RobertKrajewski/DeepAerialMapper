@@ -82,7 +82,7 @@ def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: 
     else:
         sym_patterns = ['Left', 'Left_Right', 'Right', 'Straight', 'Straight_Left', 'Straight_Right', 'Unknown']
         symbol_detector = SymbolDetector(sym_patterns)
-        cls_weight = "data_generation\mapping\symbol_v2.pt"
+        cls_weight = "configs/symbol/weights.pt"
         symbols = symbol_detector.detect_patterns(seg_mask, cls_weight)
         logger.info(f"Detected {len(symbols)} symbols")
 
