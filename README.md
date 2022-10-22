@@ -33,7 +33,7 @@ conda create --name DAM python=3.10
 conda activate DAM
 git clone https://github.com/RobertKrajewski/DeepAerialMapper.git DeepAerialMapper
 cd DeepAerialMapper
-python3 setup.py
+python3 setup.py install
 ```
 
 2. Verify the installation
