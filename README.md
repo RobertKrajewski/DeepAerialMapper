@@ -38,7 +38,7 @@ python3 setup.py install
 
 2. Verify the installation
 ```
-TODO: make a simple demo
 python3 tools/create_maps.py --input data/seg_masks
 ```
-Check the directory: `results/maps/{date_time}`
+
+3. Check the directory: `results/maps/{date_time}`
