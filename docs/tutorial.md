@@ -1,5 +1,11 @@
 ## Installation
-TODO: run pipreqs and generate requirements.txt and check if it works in a new virtual env.  (when an independent github page is created, and it works.)
+```bash
+conda create --name DAM python=3.10
+conda activate DAM
+git clone https://github.com/RobertKrajewski/DeepAerialMapper.git DeepAerialMapper
+cd DeepAerialMapper
+python3 setup.py install
+```
 
 ## Tutorial
 1. Prepare segmentation mask 
@@ -10,7 +16,7 @@ TODO: run pipreqs and generate requirements.txt and check if it works in a new v
 2. Define the palette of each mask in `configs/mask/config.yaml`
 Higher priority means more important class. i.e. LANEMARKING has priority over BLACK.
 Select the corresponding mask color of class.
-```
+```yaml
 class:
   - type: BLACK
     priority: 0
@@ -38,9 +44,11 @@ class:
     palette: [0, 128, 128]
 ```
 3. Run DeepAerialMapper algorithm
-`python3 tools/create_maps.py --input data/seg_masks`
+```bash
+python3 tools/create_maps.py --input data/seg_masks
+```
 
 ## Hyper Parameters
 Performance of extracting and grouping lanelets depends on several parameters. \
-TODO: Keep every hyperparameter into config file.
+TODO: Keep every hyperparameter into config file. \
 TODO: Introduction for meta

@@ -23,12 +23,8 @@ You can find the detailed tutorial [HERE](docs/tutorial.md)
 
 ### Get Started
 
-0. Requirements
-- Python 3
-- conda 
-
 1. Install
-```
+```bash
 conda create --name DAM python=3.10
 conda activate DAM
 git clone https://github.com/RobertKrajewski/DeepAerialMapper.git DeepAerialMapper
@@ -37,7 +33,7 @@ python3 setup.py install
 ```
 
 2. Verify the installation
-```
+```bash
 python3 tools/create_maps.py --input data/seg_masks
 ```
 
