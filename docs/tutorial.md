@@ -3,25 +3,44 @@ TODO: run pipreqs and generate requirements.txt and check if it works in a new v
 
 ## Tutorial
 1. Prepare segmentation mask 
-2. Define the palette of each mask in `mask.py`
+<figure>
+<img src="../data/seg_masks/demo.png" width="640"/>
+<figcaption>Demo mask image</figcaption>
+</figure>
+2. Define the palette of each mask in `configs/mask/config.yaml`
+Higher priority means more important class. i.e. LANEMARKING has priority over BLACK.
+Select the corresponding mask color of class.
 ```
-palette_map = {
-    SemanticClass.BLACK: [0, 0, 0],  # black
-    SemanticClass.ROAD: [128, 128, 128],  # gray
-    SemanticClass.SIDEWALK: [0, 0, 255],  # blue
-    SemanticClass.TRAFFICISLAND: [153, 51, 255],  # purple
-    SemanticClass.PARKING: [255, 255, 0],  # yellow
-    SemanticClass.VEGETATION: [0, 255, 0],  # green
-    SemanticClass.LANEMARKING: [0, 128, 128],  # cyan
-    SemanticClass.SYMBOL: [255, 0, 0],  # red
-}
+class:
+  - type: BLACK
+    priority: 0
+    palette: [0, 0, 0]
+  - type: ROAD
+    priority: 1
+    palette: [128, 128, 128]
+  - type: VEGETATION
+    priority: 2
+    palette: [0, 255, 0]
+  - type: TRAFFICISLAND
+    priority: 3
+    palette: [153, 51, 255]
+  - type: SIDEWALK
+    priority: 4
+    palette: [0, 0, 255]
+  - type: PARKING
+    priority: 5
+    palette: [255, 255, 0]
+  - type: SYMBOL
+    priority: 6
+    palette: [255, 0, 0]
+  - type: LANEMARKING
+    priority: 7
+    palette: [0, 128, 128]
 ```
-<img src="imgs\mask.png" width="640"/>
-
 3. Run DeepAerialMapper algorithm
-`python3 test/create_map.py --input {directory of masks} --output {directory to save JSON file}`
-TODO: check the function location.
+`python3 tools/create_maps.py --input data/seg_masks`
 
 ## Hyper Parameters
 Performance of extracting and grouping lanelets depends on several parameters. \
-TODO: Keep every hyperparameter into one config file. --> User can edit. [Include palette_map also into config file?]
+TODO: Keep every hyperparameter into config file.
+TODO: Introduction for meta

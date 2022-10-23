@@ -39,7 +39,6 @@ python3 setup.py install
 2. Verify the installation
 ```
 TODO: make a simple demo
-python3 test/demo.py docs/imgs/demo-mask.png work_dirs/demo
+python3 tools/create_maps.py --input data/seg_masks
 ```
-
-If you can see the output `work_dirs/demo`, it's ready to use!
+Check the directory: `results/maps/{date_time}`
