@@ -11,7 +11,7 @@ python3 setup.py install
 1. Prepare segmentation mask 
 <img src="../data/seg_masks/demo.png" width="640" alt="demo mask" title="Demo mask image"/>
 
-2. Define the palette of each mask in `configs/mask/config.yaml`
+2. Define the configuration of segmentation masks in `configs/mask/config.yaml` \
 Higher priority means more important class. i.e. LANEMARKING has priority over BLACK. \
 Select the corresponding mask color of class.
 ``` yaml
