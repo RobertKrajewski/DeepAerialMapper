@@ -1,5 +1,5 @@
 ## Installation
-```bash
+``` bash
 conda create --name DAM python=3.10
 conda activate DAM
 git clone https://github.com/RobertKrajewski/DeepAerialMapper.git DeepAerialMapper
@@ -9,14 +9,12 @@ python3 setup.py install
 
 ## Tutorial
 1. Prepare segmentation mask 
-<figure>
-<img src="../data/seg_masks/demo.png" width="640"/>
-<figcaption>Demo mask image</figcaption>
-</figure>
+<img src="../data/seg_masks/demo.png" width="640" alt="demo mask" title="Demo mask image"/>
+
 2. Define the palette of each mask in `configs/mask/config.yaml`
-Higher priority means more important class. i.e. LANEMARKING has priority over BLACK.
+Higher priority means more important class. i.e. LANEMARKING has priority over BLACK. \
 Select the corresponding mask color of class.
-```yaml
+``` yaml
 class:
   - type: BLACK
     priority: 0
@@ -43,8 +41,9 @@ class:
     priority: 7
     palette: [0, 128, 128]
 ```
+
 3. Run DeepAerialMapper algorithm
-```bash
+``` bash
 python3 tools/create_maps.py --input data/seg_masks
 ```
 
