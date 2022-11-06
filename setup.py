@@ -1,29 +1,31 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import find_packages, setup
+import pathlib
+from pkg_resources import parse_requirements
 
+def readme():
+    with open('README.md', encoding='utf-8') as f:
+        content = f.read()
+    return content
 
-try: # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError: # for pip <= 9.0.3
-    from pip.req import parse_requirements
-
-# parse_requirements() returns generator of pip.req.InstallRequirement objects
-install_reqs = parse_requirements("requirements.txt", session=False)
-
-# reqs is a list of requirement
-try:
-    reqs = [str(ir.req) for ir in install_reqs]
-except:
-    reqs = [str(ir.requirement) for ir in install_reqs]
-
+with pathlib.Path('requirements.txt').open() as requirements_txt:
+    install_requires = [
+        str(requirement)
+        for requirement
+        in parse_requirements(requirements_txt)
+    ]
 
 setup(name='deepaerialmapper',
       version='1.0',
-      description='DeepAerialMapper Utilities',
-      author='Huijo Kim',
+      description='Automated HD map generation tool',
+      long_description=readme(),
+      long_description_content_type='text/markdown',
+      author='DeepAerialMapper Contributors',
       author_email='ccomkhj@gmail.com',
-      packages=['deepaerialmapper'],
+      keywords='computer vision, HD map',
+      packages=find_packages(exclude=('configs','tools','data','docs')),
       url='https://github.com/RobertKrajewski/DeepAerialMapper',
-      install_requires=reqs
+      license='Apache License 2.0',
+      install_requires=install_requires,
      )

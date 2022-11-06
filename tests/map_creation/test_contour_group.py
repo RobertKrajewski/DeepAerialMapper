@@ -1,9 +1,6 @@
 import numpy as np
-import sys
-import os
 from typing import List
-sys.path.append(os.getcwd())
-from data_generation.mapping.contour import ContourManager
+from deepaerialmapper.map_creation.contour import ContourManager
 
 def group_contours(groups):
 

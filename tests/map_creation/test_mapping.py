@@ -12,11 +12,11 @@ import yaml
 from tests.test_corner_split import find_split_points
 
 sys.path.insert(0, r'.')
-from data_generation.mapping.contour import ContourSegment, ContourManager
-from data_generation.mapping.mapping_error import resample_polygon, evaluate_map, evaluate_dataset
-from data_generation.mapping.masks import SegmentationMask, SemanticClass, ClassMask
-from data_generation.mapping.symbol import SymbolDetector
-from data_generation.mapping.tool_kit import compute_pca
+from deepaerialmapper.map_creation.contour import ContourSegment, ContourManager
+from deepaerialmapper.eval.mapping_error import resample_polygon, evaluate_map, evaluate_dataset
+from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass, ClassMask
+from deepaerialmapper.map_creation.symbol import SymbolDetector
+from deepaerialmapper.map_creation.contour import compute_pca
 
 
 def test_compute_pca():

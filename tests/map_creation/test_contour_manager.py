@@ -1,6 +1,6 @@
 import numpy as np
 
-from data_generation.mapping.contour import ContourManager
+from deepaerialmapper.map_creation.contour import ContourManager
 
 
 def test_split_sharp_corners():

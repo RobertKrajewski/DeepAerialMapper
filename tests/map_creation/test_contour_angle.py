@@ -1,10 +1,7 @@
 import numpy as np
-import sys
-import os
 import math
 
-sys.path.append(os.getcwd())
-from data_generation.mapping.contour import ContourSegment
+from deepaerialmapper.map_creation.contour import ContourSegment
 
 
 def test_contour_angle():
