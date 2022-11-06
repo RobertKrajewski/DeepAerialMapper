@@ -1,7 +1,6 @@
 import argparse
 import shutil
 from datetime import datetime
-import json
 from collections import Counter
 from pathlib import Path
 
@@ -9,19 +8,15 @@ import numpy as np
 import cv2
 from loguru import logger
 from typing import Set, FrozenSet, List
-import sys
-import os
 import yaml
 
-sys.path.append(os.getcwd())
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
-
-
 from deepaerialmapper.map_creation.contour import ContourSegment, ContourManager
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 from deepaerialmapper.export.map import Lanelet2Map
 from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass
 from deepaerialmapper.map_creation.symbol import SymbolDetector
+
 
 
 def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: List, skip_lanelets=True,
@@ -54,7 +49,7 @@ def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: 
         # .split_sharp_corners(angle_threshold=50, length_threshold=10)
 
     img_ref, img_overlay = MaskVisualizer().show(lanemarking_mask, lanemarking_contours.merge(road_contours), background=seg_mask.mask,
-                                                 show=True, random=True)
+                                                 show=False, random=True)
     # img_ref, img_overlay = lanemarking_mask.show(lanemarking_contours.merge(road_contours), background=seg_mask.mask,
     #                                              show=True, random=True)
     if debug_dir:
@@ -83,7 +78,7 @@ def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: 
     else:
         sym_patterns = ['Left', 'Left_Right', 'Right', 'Straight', 'Straight_Left', 'Straight_Right', 'Unknown']
         symbol_detector = SymbolDetector(sym_patterns)
-        cls_weight = "configs/symbol/weights.pt"
+        cls_weight = "configs/symbol_weights.pt"
         symbols = symbol_detector.detect_patterns(seg_mask, cls_weight)
         logger.info(f"Detected {len(symbols)} symbols")
 
@@ -205,7 +200,7 @@ def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Post-process semantic segmentation to HDmap")
-    parser.add_argument("--input",
+    parser.add_argument("input",
                         help="location of input segmentation folder.")
     parser.add_argument("--output", default="results/maps/<now>",
                         help="Location of the root output directory.")
@@ -234,29 +229,16 @@ if __name__ == "__main__":
     script_path = Path(__file__).resolve()
     shutil.copyfile(script_path, output_dir / script_path.name)
 
-    config_dir = 'configs/mask/config.yaml'
+    config_dir = 'configs/config.yaml'
     with open(config_dir, 'r') as f:
         config = yaml.safe_load(f)
 
-    meta_file = input_dir / "meta.json"
-    if meta_file.exists():
-        shutil.copyfile(meta_file, output_dir / meta_file.name)
-        with meta_file.open() as f:
-            meta = json.load(f)
-    else:
-        meta = {}
-
-    ignore_file = input_dir / "ignore_areas.json"
-    if ignore_file.exists():
-        shutil.copyfile(ignore_file, output_dir / ignore_file.name)
-        with ignore_file.open() as f:
-            ignore = json.load(f)
-    else:
-        ignore = {}
+    meta = {} if config['meta'] is None else config['meta']
+    ignore = {} if config['ignore'] is None else config['ignore']
+    palette_map = {SemanticClass[i["type"]]: i['color'] for i in config['palette']}
 
     selected_segmentation_files = segmentation_files[int(args.start_map):]
 
-    palette_map = {SemanticClass[i["type"]]: i['palette'] for i in config['class']}
 
     for i_segmentation_file, segmentation_file in enumerate(selected_segmentation_files):
         logger.info(

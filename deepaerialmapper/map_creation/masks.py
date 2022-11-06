@@ -7,21 +7,34 @@ import cv2
 from typing import List, Dict, Union, Tuple
 from dataclasses import dataclass
 from enum import Enum
-import yaml
 
 from loguru import logger
 
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 
-config_dir = 'configs/mask/config.yaml'
-with open(config_dir, 'r') as f:
-    config = yaml.safe_load(f)
+class SemanticClass(Enum):
+    BLACK = 0
+    VEGETATION = 2
+    ROAD = 1
+    TRAFFICISLAND = 3
+    SIDEWALK = 4
+    PARKING = 5
+    SYMBOL = 6
+    LANEMARKING = 7
 
-types = [i['type'] for i in config['class']]
-# Sort types based on the priority
-sort_types = sorted(types, key=lambda x: [d['priority'] for d in config['class'] if x in d.values()])
+    @classmethod
+    def from_name(cls, name):
+        for c in cls:
+            if c.name == name:
+                return name
+        raise ValueError(f"Could not find SemanticClass with name {name}")
 
-SemanticClass = Enum('SemanticClass', " ".join(sort_types))
+    @classmethod
+    def from_id(cls, id):
+        for c in cls:
+            if c.value == id:
+                return c
+        raise ValueError(f"Could not find SemanticClass with id {id}")
 
 
 @dataclass
