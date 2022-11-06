@@ -4,50 +4,55 @@ conda create --name DAM python=3.10
 conda activate DAM
 git clone https://github.com/RobertKrajewski/DeepAerialMapper.git DeepAerialMapper
 cd DeepAerialMapper
-python3 setup.py install
+pip install -v -e .
 ```
 
 ## Tutorial
 1. Prepare segmentation mask 
 <img src="../data/seg_masks/demo.png" width="640" alt="demo mask" title="Demo mask image"/>
 
-2. Define the configuration of segmentation masks in `configs/mask/config.yaml` \
-Higher priority means more important class. i.e. LANEMARKING has priority over BLACK. \
-Select the corresponding mask color of class.
+2. Define the configuration of segmentation masks in `configs/config.yaml` \
+Select the corresponding mask color of class and GPS meta data of each image.
 ``` yaml
-class:
+palette:
   - type: BLACK
-    priority: 0
-    palette: [0, 0, 0]
+    color: [0, 0, 0]
   - type: ROAD
-    priority: 1
-    palette: [128, 128, 128]
+    color: [128, 128, 128]
   - type: VEGETATION
-    priority: 2
-    palette: [0, 255, 0]
+    color: [0, 255, 0]
   - type: TRAFFICISLAND
-    priority: 3
-    palette: [153, 51, 255]
+    color: [153, 51, 255]
   - type: SIDEWALK
-    priority: 4
-    palette: [0, 0, 255]
+    color: [0, 0, 255]
   - type: PARKING
-    priority: 5
-    palette: [255, 255, 0]
+    color: [255, 255, 0]
   - type: SYMBOL
-    priority: 6
-    palette: [255, 0, 0]
+    color: [255, 0, 0]
   - type: LANEMARKING
-    priority: 7
-    palette: [0, 128, 128]
+    color: [0, 128, 128]
+  # type: object name
+  # color: RGB masking color of the object
+
+ignore:
+  # define the reigon you want to ignore in the mask
+
+meta:
+  'demo':
+      origin:
+          - 292161.665
+          - 5630314.6051
+      scale:
+          - 0.05000433957147767
+          - 0.050011118737163816
+      proj: 'epsg:25832'
+      width: 3687
+      height: 1457
+  # meta of GPS image
+
 ```
 
 3. Run DeepAerialMapper algorithm
 ``` bash
-python3 tools/create_maps.py --input data/seg_masks
+python3 tools/create_maps.py input data/seg_masks
 ```
-
-## Hyper Parameters
-Performance of extracting and grouping lanelets depends on several parameters. \
-TODO: Keep every hyperparameter into config file. \
-TODO: Introduction for meta

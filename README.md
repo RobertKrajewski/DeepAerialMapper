@@ -29,12 +29,15 @@ conda create --name DAM python=3.10
 conda activate DAM
 git clone https://github.com/RobertKrajewski/DeepAerialMapper.git DeepAerialMapper
 cd DeepAerialMapper
-python3 setup.py install
+pip install -v -e .
+# "-v" means verbose, or more output
+# "-e" means installing a project in editable mode,
+# thus any local modifications made to the code will take effect without reinstallation.
 ```
 
 2. Verify the installation
 ```bash
-python3 tools/create_maps.py --input data/seg_masks
+python3 tools/create_maps.py data/seg_masks
 ```
 
-3. Check the directory: `results/maps/{date_time}`
+3. Check the output directory: `results/maps/{date_time}`
