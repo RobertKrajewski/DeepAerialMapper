@@ -237,12 +237,15 @@ if __name__ == "__main__":
     ignore = {} if config['ignore'] is None else config['ignore']
     palette_map = {SemanticClass[i["type"]]: i['color'] for i in config['palette']}
 
-    selected_segmentation_files = segmentation_files[int(args.start_map):]
+    start_map = int(args.start_map)
 
 
-    for i_segmentation_file, segmentation_file in enumerate(selected_segmentation_files):
+    for i_segmentation_file, segmentation_file in enumerate(segmentation_files):
+        if i_segmentation_file < start_map:
+            logger.info(f"Skipping map {i_segmentation_file} as start_map is set to {start_map}!")
+            continue
         logger.info(
-            f'Processing segmentation {i_segmentation_file + 1}/{len(selected_segmentation_files)}: {segmentation_file}')
+            f'Processing segmentation {i_segmentation_file}/{len(segmentation_files)}: {segmentation_file}')
         seg_mask = SegmentationMask.from_file(segmentation_file, palette_map)
         filename = segmentation_file.stem
 
