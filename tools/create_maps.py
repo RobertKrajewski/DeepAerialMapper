@@ -21,7 +21,7 @@ from deepaerialmapper.map_creation.symbol import SymbolDetector
 
 def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: List, skip_lanelets=True,
                                   skip_symbols=False, debug_dir=None, debug_prefix="") -> Lanelet2Map:
-    seg_mask.mask = seg_mask.mask[818:1441, 1700:2170]
+
 
     # Find road borders
     road_mask = seg_mask.class_mask(
