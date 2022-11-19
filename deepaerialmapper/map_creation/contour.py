@@ -620,6 +620,10 @@ class ContourManager:
         pairwise_distances = np.zeros((num_segments, num_segments, 2))
         for i_contour, contour in enumerate(contour_segments):
             for j_contour, other_contour in enumerate(contour_segments):
+                if i_contour == j_contour:
+                    pairwise_distances[i_contour, j_contour] = np.array([np.inf, np.inf])
+                    continue
+
                 if distance_mode == "centers_oriented":
                     pairwise_distances[i_contour, j_contour] = contour.oriented_distance(other_contour)
                 else:
