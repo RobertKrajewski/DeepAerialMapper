@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from loguru import logger
+from scipy import linalg
 
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 
@@ -278,43 +279,70 @@ class ClassMask:
         new_mask = cv2.ximgproc.thinning(self.mask.astype(np.uint8) * 255) == 255
         return ClassMask(new_mask, self.class_names)
 
-    def find_split_point(self, debug=False) -> Tuple["ClassMask", np.ndarray]:
+    def find_split_points(self, debug=False) -> Tuple["ClassMask", List[np.ndarray]]:
         """ Eliminate splitpoint from mask """
-        new_mask = self.mask
-        drawing = cv2.cvtColor(self.mask.astype(np.uint8) * 255, cv2.COLOR_GRAY2RGB)
-        split_points = np.zeros_like(self.mask)
 
-        if debug:
-            drawing = cv2.cvtColor(self.mask.astype(np.uint8) * 255, cv2.COLOR_GRAY2RGB)
-        idx_ys, idx_xs = np.where(new_mask)
+        # Find all split points
+        split_ptrs = []
+        idx_ys, idx_xs = np.where(self.mask)
         for idx_y, idx_x in zip(idx_ys, idx_xs):
-            if self.is_split_point(new_mask, idx_y, idx_x):
-                """ if the pixel is split point, remove the pixel """
-                # new_mask[idx_y, idx_x] = 0
+            if self.is_split_point(self.mask, idx_y, idx_x):
+                split_ptrs.append(np.array([idx_x, idx_y]))
+
+        # Remove split points from contour mask
+        new_mask = np.copy(self.mask)
+        for idx_x, idx_y in split_ptrs:
+            for (nb_idx_y, nb_idx_x) in [(idx_y + dy, idx_x + dx) for (dy, dx) in
+                                         itertools.product([-1, 0, 1], [-1, 0, 1])]:
+                if (nb_idx_y < 0) or (nb_idx_x < 0) or (nb_idx_y >= self.shape[0]) or (nb_idx_x >= self.shape[1]):
+                    # if index is out of image, then skip
+                    continue
+                new_mask[nb_idx_y, nb_idx_x] = 0
+
+        # Detect groups of split points and keep only one per group
+        filtered_split_ptrs = []
+        visited = [False] * len(split_ptrs)
+        distance_threshold = 5
+        for i_split_ptr, split_ptr in enumerate(split_ptrs):
+            if visited[i_split_ptr]:
+                continue
+
+            close_ptrs = [split_ptr]
+
+            for j_split_ptr in range(i_split_ptr, len(split_ptrs)):
+                if visited[j_split_ptr]:
+                    continue
+
+                other_point = split_ptrs[j_split_ptr]
+                # Skip all points too close to current one
+                if linalg.norm(split_ptr - other_point) < distance_threshold:
+                    visited[j_split_ptr] = True
+                    close_ptrs.append(other_point)
+
+            filtered_split_ptrs.append(np.round(np.mean(close_ptrs, axis=0)).astype(int))
+            visited[i_split_ptr] = True
+
+        logger.debug(f"Removed {len(split_ptrs) - len(filtered_split_ptrs)} split points due to proximity.")
+        logger.debug(f"Found {len(filtered_split_ptrs)} remaining split points:\n{np.asarray(filtered_split_ptrs)}")
+
+        # Visualize for debugging
+        if debug:
+            drawing = cv2.cvtColor(new_mask.astype(np.uint8) * 255, cv2.COLOR_GRAY2RGB)
+
+            for idx_x, idx_y in filtered_split_ptrs:
                 for (nb_idx_y, nb_idx_x) in [(idx_y + dy, idx_x + dx) for (dy, dx) in
                                              itertools.product([-1, 0, 1], [-1, 0, 1])]:
-                    if (nb_idx_y < 0) or (nb_idx_x < 0) or (nb_idx_y >= self.shape[0]) or (nb_idx_x >= self.shape[1]):
+                    if (nb_idx_y < 0) or (nb_idx_x < 0) or (nb_idx_y >= self.shape[0]) or (
+                            nb_idx_x >= self.shape[1]):
                         # if index is out of image, then skip
                         continue
-                    new_mask[nb_idx_y, nb_idx_x] = 0
+                    drawing[nb_idx_y, nb_idx_x] = (255, 0, 0)
 
-                split_points[idx_y, idx_x] = 255  # only the center of split point
-                if debug:
-                    # drawing[idx_y, idx_x] = (255,0,0)
-                    for (nb_idx_y, nb_idx_x) in [(idx_y + dy, idx_x + dx) for (dy, dx) in
-                                                 itertools.product([-1, 0, 1], [-1, 0, 1])]:
-                        if (nb_idx_y < 0) or (nb_idx_x < 0) or (nb_idx_y >= self.shape[0]) or (
-                                nb_idx_x >= self.shape[1]):
-                            # if index is out of image, then skip
-                            continue
-                        drawing[nb_idx_y, nb_idx_x] = (255, 0, 0)
-
-        if debug:
             import matplotlib.pyplot as plt
             plt.imshow(drawing)
             plt.show()
 
-        return ClassMask(new_mask, self.class_names), split_points
+        return ClassMask(new_mask, self.class_names), filtered_split_ptrs
 
     @staticmethod
     def is_split_point(contour_mask: np.ndarray, y: int, x: int) -> bool:
