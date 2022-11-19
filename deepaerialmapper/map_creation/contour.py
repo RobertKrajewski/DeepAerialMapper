@@ -638,8 +638,8 @@ class ContourManager:
         # Remove long distance assignments
         cost[pairwise_distances[..., 0] > 300] = np.inf
 
-        cost[np.abs(pairwise_distances[..., 1]) > 1 + np.abs(
-            pairwise_distances[..., 0]) / 10] = np.inf  # Remove high lat distance possible matches
+        #cost[(np.abs(pairwise_distances[..., 1]) + np.abs(
+        #    pairwise_distances[..., 0]) / 10) > 1] = np.inf  # Remove high lat distance possible matches
         cost[np.abs(pairwise_distances[..., 1]) > 25] = np.inf  # Remove high lat distance possible matches
 
         # TODO: Check orientation difference
