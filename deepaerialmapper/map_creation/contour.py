@@ -334,13 +334,7 @@ class ContourManager:
 
         return ContourManager(new_contours)
 
-    def group_at_split_points(self, split_points_mask, debug=True):
-
-        split_ctrs, _ = cv2.findContours(split_points_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        split_ptrs = [i[0].squeeze() for i in split_ctrs]  # take the first pixel as the main. Sometime multiple pixels.
-
-        logger.debug(f"Found {len(split_ptrs)} split points:\n{np.asarray(split_ptrs)}")
-
+    def group_at_split_points(self, split_ptrs, debug=True):
         # Two end points are the most farest points in thin lane marking.
         end_A = [i[0].squeeze() for i in self.contours]  # one end point of the thin contour
         end_B = [i[-1].squeeze() for i in self.contours]  # another end point of the thin contour
@@ -360,36 +354,35 @@ class ContourManager:
         idx_separate = len(end_A)
 
         def compute_angle(idx_1: int, idx_2: int, mode="half") -> float:
-            if mode == "half":
-                # if idx > idx_separate --> seg B, else --> seg A
-                #  angle difference between line 0 and line 1
-                if close_idxs[idx_1] > idx_separate and close_idxs[
-                    idx_2] > idx_separate:  # segment B of line 0, segment B of line 1
-                    angle = segments_B[close_idxs[idx_1] % idx_separate].abs_angle_difference(
-                        segments_B[close_idxs[idx_2] % idx_separate])
-                elif close_idxs[idx_1] < idx_separate and close_idxs[
-                    idx_2] > idx_separate:  # segment A of line 0, segment B of line 1
-                    angle = segments_A[close_idxs[idx_1]].abs_angle_difference(
-                        segments_B[close_idxs[idx_2] % idx_separate])
-                elif close_idxs[idx_1] > idx_separate and close_idxs[
-                    idx_2] < idx_separate:  # segment B of line 0, segment A of line 1
-                    angle = segments_B[close_idxs[idx_1] % idx_separate].abs_angle_difference(
-                        segments_A[close_idxs[idx_2]])
-                else:  # segment A of line 0, segment A of line 1
-                    angle = segments_A[close_idxs[idx_1]].abs_angle_difference(segments_A[close_idxs[idx_2]])
-            else:
-                angle = segments_full[close_idxs[idx_1] % idx_separate].abs_angle_difference(
+            """
+            half: Use first/second half of a segment
+            full: Use full contour for angle calculation
+            """
+
+            if mode == "full":
+                return segments_full[close_idxs[idx_1] % idx_separate].abs_angle_difference(
                     segments_full[close_idxs[idx_2] % idx_separate])
+
+            # mode == "half"
+            first_idx = close_idxs[idx_1]
+            second_idx = close_idxs[idx_2]
+
+            first_segment = segments_B[first_idx % idx_separate] if first_idx >= idx_separate else segments_A[first_idx]
+            second_segment = segments_B[second_idx % idx_separate] if second_idx >= idx_separate else segments_A[
+                second_idx]
+            angle = first_segment.abs_angle_difference(second_segment)
             return angle
 
         # Find 3 close contours around the split_points
         for i_split_ptr, split_ptr in enumerate(split_ptrs):
+            logger.debug(f"Grouping around split point {i_split_ptr} at {split_ptr}")
             dist_2_A = scipy.linalg.norm(split_ptr - end_A, axis=1)  # distance btw segment A and split point
             dist_2_B = scipy.linalg.norm(split_ptr - end_B, axis=1)  # distance btw segment B and split point
             dist_2 = np.hstack((dist_2_A, dist_2_B))
 
             # Three closest ctrs
-            close_idxs = np.argsort(dist_2)[:3]  # Expected: 9 and 11
+            close_idxs = np.argsort(dist_2)[:3]
+            logger.debug(f"Closest endpoints: {close_idxs}")
 
             # Check that all selected end points are in proximity (<5px distance)
             if not np.all(dist_2[close_idxs] < 5):
