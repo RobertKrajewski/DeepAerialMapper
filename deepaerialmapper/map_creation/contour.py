@@ -506,11 +506,10 @@ class ContourManager:
         return new_contours
 
     @staticmethod
-    def _group_contours(groups):
-
+    def _group_contours(groups: List[np.ndarray]) -> List[np.ndarray]:
         # Get the highest contour id
-        max_contour_id = int(np.max(np.array(groups)).flatten())  # -> 7
-        contour2group = [-1] * (int(max_contour_id) + 1)
+        max_contour_id = int(np.max(np.asarray(groups)))
+        contour2group = [-1] * (max_contour_id + 1)
 
         next_group = 0
         for seg_a, seg_b in groups:
@@ -524,20 +523,21 @@ class ContourManager:
                 next_group += 1
             elif higher_group_idx > -1 and lower_group_idx == -1:
                 # Assign to existing group
-                matching_group_idx = max(contour2group[seg_a], contour2group[seg_b])
-                contour2group[seg_a] = matching_group_idx
-                contour2group[seg_b] = matching_group_idx
+                contour2group[seg_a] = higher_group_idx
+                contour2group[seg_b] = higher_group_idx
             else:
                 # Shit - we have to merge groups
-                # Replace all occurences of higher group idx by lower group idx
+                # Replace all occurrences of higher group idx by lower group idx
                 contour2group = [idx if idx != higher_group_idx else lower_group_idx for idx in contour2group]
 
         new_groups = []
+        contour2group = np.asarray(contour2group)
         for group_idx in np.unique(contour2group):
             if group_idx == -1:
-                print("Shit happened")
+                # Skip group of non-grouped contours
                 continue
 
+            # For each group, get all assigned contours
             new_groups.append([i_c for i_c in range(max_contour_id + 1) if contour2group[i_c] == group_idx])
 
         return new_groups
