@@ -510,7 +510,7 @@ class ContourManager:
 
             # Merge relevant contours
             group_contours = ContourManager(group_contours)
-            grouped_group_contours, ungrouped_group_contours = group_contours.group(max_gap_size=5,
+            grouped_group_contours, ungrouped_group_contours = group_contours.group(max_gap_size=15,
                                                                                     distance_mode="endpoints")
 
             if len(ungrouped_group_contours):
