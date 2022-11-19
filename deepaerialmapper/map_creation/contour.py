@@ -438,6 +438,9 @@ class ContourManager:
         if len(filter_idxes_close) < len(idxes_close):
             logger.debug(f"Removed {len(idxes_close) - len(filter_idxes_close)} merges of contours with themselves")
 
+        # Remove duplicate merges
+        filter_idxes_close = np.unique(filter_idxes_close, axis=0)
+
         if len(filter_idxes_close) == 0:
             logger.debug("No contours were be merged at split points!")
             return self
