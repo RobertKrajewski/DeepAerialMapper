@@ -347,13 +347,13 @@ class ContourManager:
 
         # If contour is too short, then use full contours.
         segments_A = [
-            ContourSegment.from_coordinates(c[:len(c) // 2]) if len(c) != 1 else ContourSegment.from_coordinates(c) for
+            ContourSegment.from_coordinates(c[:2]) if len(c) > 2 else ContourSegment.from_coordinates(c) for
             c in self.contours]  # First half
         segments_B = [
-            ContourSegment.from_coordinates(c[len(c) // 2:]) if len(c) != 1 else ContourSegment.from_coordinates(c) for
+            ContourSegment.from_coordinates(c[-2:]) if len(c) > 2 else ContourSegment.from_coordinates(c) for
             c in self.contours]  # Second half
 
-        segments_full = [ContourSegment.from_coordinates(i) if len(i) != 1 else ContourSegment.from_coordinates(i) for i
+        segments_full = [ContourSegment.from_coordinates(i) if len(i) <= 2 else ContourSegment.from_coordinates(i) for i
                          in self.contours]
 
         idxes_close = []  # 3 indexes next to split point
