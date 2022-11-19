@@ -1,4 +1,5 @@
 import math
+import pprint
 import random
 import numpy as np
 import cv2
@@ -384,26 +385,44 @@ class ContourManager:
             close_idxs = np.argsort(dist_2)[:3]
             logger.debug(f"Closest endpoints: {close_idxs}")
 
-            # Check that all selected end points are in proximity (<5px distance)
-            if not np.all(dist_2[close_idxs] < 5):
-                logger.warning(f"At least one endpoint is too far away from split point: {dist_2[close_idxs]}")
+            max_endpoint_distance = 6
+            # Check that all selected end points are in proximity (<=5px distance)
+            if np.all(dist_2[close_idxs] > max_endpoint_distance):
+                logger.warning(f"All endpoints are too far away from {i_split_ptr}th split point {split_ptr}: {np.array2string(dist_2[close_idxs], precision=2)}")
+                continue
+            elif not np.all(dist_2[close_idxs] <= max_endpoint_distance):
+                logger.warning(
+                    f"At least one endpoint is too far away from {i_split_ptr}th split point {split_ptr}: {np.array2string(dist_2[close_idxs], precision=2)}")
 
-            angle_0_1 = compute_angle(0, 1, mode="full")
-            angle_0_2 = compute_angle(0, 2, mode="full")
-            angle_1_2 = compute_angle(1, 2, mode="full")
+            mode = "half"
+            angle_0_1 = compute_angle(0, 1, mode=mode)
+            angle_0_2 = compute_angle(0, 2, mode=mode)
+            angle_1_2 = compute_angle(1, 2, mode=mode)
+
+            if np.isnan(angle_0_1):
+                angle_0_1 = 1000
+            if np.isnan(angle_0_2):
+                angle_0_2 = 1000
+            if np.isnan(angle_1_2):
+                angle_1_2 = 1000
 
             # If the third element does not exist anymore (super short segment that was removed), increase weight to prevent selection
-            if dist_2[close_idxs][0] > 5:
+            if dist_2[close_idxs][0] > max_endpoint_distance:
                 angle_0_1 += 1000
                 angle_0_2 += 1000
-            if dist_2[close_idxs][1] > 5:
+            if dist_2[close_idxs][1] > max_endpoint_distance:
                 angle_0_1 += 1000
                 angle_1_2 += 1000
-            if dist_2[close_idxs][2] > 5:
+            if dist_2[close_idxs][2] > max_endpoint_distance:
                 angle_0_2 += 1000
                 angle_1_2 += 1000
 
-            fit = np.argmin((angle_0_1, angle_0_2, angle_1_2))
+            angles = (angle_0_1, angle_0_2, angle_1_2)
+            if min(angles) >= 1000:
+                logger.warning("Best assignment is too far away for split point")
+                continue
+
+            fit = np.argmin(angles)
             if fit == 0:  # connect line 0 and 1
                 idxes_close.append(close_idxs[:2])
             elif fit == 1:  # connect line 0 and 2
