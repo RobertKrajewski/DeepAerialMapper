@@ -41,11 +41,11 @@ def create_map_from_semantic_mask(seg_mask, origin, px2m, proj, ignore_regions: 
     # As lanemarkings are THICK, thin them to get a line only
     lanemarking_mask = lanemarking_mask.thin()
     # lanemarking_mask.show()
-    lanemarking_mask, split_points_mask = lanemarking_mask.find_split_point(debug=True)
+    lanemarking_mask, split_points = lanemarking_mask.find_split_points(debug=False)
     # lanemarking_mask.show()
 
     lanemarking_contours = ContourManager.from_mask(lanemarking_mask).unique_coordinates().subsample(30) \
-        .group_at_split_points(split_points_mask)#.split_sharp_corners_v2() \
+        .group_at_split_points(split_points)#.split_sharp_corners_v2() \
         # .split_sharp_corners(angle_threshold=50, length_threshold=10)
 
     img_ref, img_overlay = MaskVisualizer().show(lanemarking_mask, lanemarking_contours.merge(road_contours), background=seg_mask.mask,
