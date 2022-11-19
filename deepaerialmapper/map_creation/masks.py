@@ -37,6 +37,18 @@ class SemanticClass(Enum):
         raise ValueError(f"Could not find SemanticClass with id {id}")
 
 
+palette_map = {
+    SemanticClass.BLACK: [0, 0, 0],  # black
+    SemanticClass.ROAD: [128, 128, 128],  # gray
+    SemanticClass.SIDEWALK: [0, 0, 255],  # blue
+    SemanticClass.TRAFFICISLAND: [153, 51, 255],  # purple
+    SemanticClass.PARKING: [255, 255, 0],  # yellow
+    SemanticClass.VEGETATION: [0, 255, 0],  # green
+    SemanticClass.LANEMARKING: [0, 128, 128],  # cyan
+    SemanticClass.SYMBOL: [255, 0, 0],  # red
+}
+
+
 @dataclass
 class ClassMask:
     """Binary segmentation mask"""
