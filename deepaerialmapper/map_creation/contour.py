@@ -444,16 +444,21 @@ class ContourManager:
         if len(filter_idxes_close) == 0:
             logger.debug("No contours were be merged at split points!")
             return self
-        logger.debug(f"Merging contours {np.asarray(filter_idxes_close)}")
+        logger.debug(f"Merging contours \n{np.asarray(filter_idxes_close)}")
 
         grouped_idxes_close = self._group_contours(filter_idxes_close)
 
+        logger.debug(f"Created {len(grouped_idxes_close)} merge groups:\n{pprint.pformat(grouped_idxes_close)}")
+
         new_contours = []
+        # merge contours around split points if they are parallel.
         new_contours.extend(self._merge_contours(self.contours,
-                                                 grouped_idxes_close))  # merge contours around split points if they are parallel.
-        new_contours.extend(ctr for i, ctr in enumerate(self.contours) if
-                            i not in [idx for idxes in grouped_idxes_close for idx in
-                                      idxes])  # include non split points related segments.
+                                                 grouped_idxes_close))
+
+        # include non split points related segments.
+        grouped_idxes = sum(grouped_idxes_close, [])
+        new_contours.extend(ctr for i_ctr, ctr in enumerate(self.contours) if
+                            i_ctr not in grouped_idxes)
 
         # Remove contours consisting of a single point only
         new_contours = [c for c in new_contours if len(c) > 1]
@@ -492,12 +497,14 @@ class ContourManager:
     @staticmethod
     def _merge_contours(contours: List[np.ndarray], groups: List[List[int]]) -> List[np.ndarray]:
         new_contours = []
-        for group in groups:
+        for i_group, group in enumerate(groups):
+            logger.debug(f"Merging contour group {i_group} containing contours {group}")
             # Collect all the relevant contours
             group_contours = [c for i_c, c in enumerate(contours) if i_c in group]
 
             # Now merging necessary
             if len(group_contours) == 1:
+                logger.debug("Group contains only single contour, no merging necessary!")
                 new_contours.append(group_contours[0])
                 continue
 
@@ -507,14 +514,15 @@ class ContourManager:
                                                                                     distance_mode="endpoints")
 
             if len(ungrouped_group_contours):
-                print("Shit happened. Some contours were not grouped. Pls check.")
+                logger.warning(f"Shit happened. {len(ungrouped_group_contours)} contours were not grouped.")
 
             if len(grouped_group_contours) == 0:
-                print("Big shit happened. Contour could not be grouped at all :(")
+                logger.error("Big shit happened. Contour could not be grouped at all :(")
                 continue
 
             if len(grouped_group_contours) > 1:
-                print("Small shit happened. Contour was grouped more than once :/")
+                logger.warning(
+                    f"Small shit happened. Contour was grouped into {len(grouped_group_contours)} contours :/")
 
             new_contours.append(grouped_group_contours[0].contour)
 
@@ -675,6 +683,7 @@ class ContourManager:
             i_contour_best = np.argmin(cost[i_contour])
             if cost[i_contour, i_contour_best] > max_gap_size:
                 # Too far away match
+                logger.debug(f"Did not match with {i_contour_best} due too large cost {cost[i_contour, i_contour_best]:.2f}")
                 continue
 
             conn[i_contour, 1] = i_contour_best  # Set next
