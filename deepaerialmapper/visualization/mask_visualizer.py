@@ -116,7 +116,9 @@ class MaskVisualizer:
 
                 points.append((contour, i, 3, color))
 
-            texts.append((f'{i_contour}', contour[len(contour) // 2, 0]))
+            text_pos = np.array(contour[len(contour) // 2, 0]) + np.random.uniform(-3, 3, 2)
+            text_pos = np.round(text_pos).astype(int)
+            texts.append((f'{i_contour}', text_pos))
 
         # Draw all lines
         for contour, color in lines:
