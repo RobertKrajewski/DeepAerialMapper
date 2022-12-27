@@ -4,7 +4,7 @@ from typing import List, FrozenSet, Set, Tuple
 
 from pyproj import Proj
 
-from deepaerialmapper.map_creation.symbol import Symbol
+from deepaerialmapper.mapping.symbol import Symbol
 
 
 class Map:

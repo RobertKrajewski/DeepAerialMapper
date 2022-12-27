@@ -9,7 +9,7 @@ import numpy as np
 from loguru import logger
 
 from deepaerialmapper.classification.symbol import classify
-from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass
+from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
 
 
 @dataclass

@@ -36,7 +36,7 @@ class Lanemarking:
 
         all_solid_points = np.concatenate([o.contour for o in other_lanemarkings])
 
-        from deepaerialmapper.map_creation.contour import ContourSegment
+        from deepaerialmapper.mapping.contour import ContourSegment
 
         for lanemarking in lanemarkings:
             # Check end

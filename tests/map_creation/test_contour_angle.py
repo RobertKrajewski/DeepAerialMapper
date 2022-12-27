@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-from deepaerialmapper.map_creation.contour import ContourSegment
+from deepaerialmapper.mapping.contour import ContourSegment
 
 
 def test_contour_angle():

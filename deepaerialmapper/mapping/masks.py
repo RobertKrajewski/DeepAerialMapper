@@ -10,7 +10,7 @@ import numpy as np
 from loguru import logger
 from scipy import linalg
 
-from deepaerialmapper.map_creation.lanemarking import Lanemarking
+from deepaerialmapper.mapping.lanemarking import Lanemarking
 
 
 class SemanticClass(Enum):
@@ -97,7 +97,7 @@ class ClassMask:
         window_name: str = "",
         random: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        from deepaerialmapper.map_creation.contour import ContourManager
+        from deepaerialmapper.mapping.contour import ContourManager
 
         if isinstance(contours, ContourManager):
             contours = contours.contours

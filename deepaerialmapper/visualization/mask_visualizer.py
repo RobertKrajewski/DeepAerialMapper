@@ -4,8 +4,8 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from deepaerialmapper.map_creation.lanemarking import Lanemarking
-from deepaerialmapper.map_creation.masks import ClassMask
+from deepaerialmapper.mapping.lanemarking import Lanemarking
+from deepaerialmapper.mapping.masks import ClassMask
 
 
 class MaskVisualizer:
@@ -22,7 +22,7 @@ class MaskVisualizer:
         window_name: str = "",
         random: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        from deepaerialmapper.map_creation.contour import ContourManager
+        from deepaerialmapper.mapping.contour import ContourManager
 
         if isinstance(contours, ContourManager):
             contours = contours.contours

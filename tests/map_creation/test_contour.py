@@ -1,6 +1,6 @@
 import numpy as np
 
-from deepaerialmapper.map_creation.contour import ContourSegment
+from deepaerialmapper.mapping.contour import ContourSegment
 
 
 def test_lines_intersection():

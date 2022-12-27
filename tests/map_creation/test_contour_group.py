@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from deepaerialmapper.map_creation.contour import ContourManager
+from deepaerialmapper.mapping.contour import ContourManager
 
 
 def group_contours(groups):

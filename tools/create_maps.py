@@ -11,11 +11,11 @@ from typing import Set, FrozenSet, List
 import yaml
 
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
-from deepaerialmapper.map_creation.contour import ContourSegment, ContourManager
-from deepaerialmapper.map_creation.lanemarking import Lanemarking
-from deepaerialmapper.map_creation import Map
-from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass
-from deepaerialmapper.map_creation.symbol import SymbolDetector
+from deepaerialmapper.mapping.contour import ContourSegment, ContourManager
+from deepaerialmapper.mapping.lanemarking import Lanemarking
+from deepaerialmapper.mapping import Map
+from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
+from deepaerialmapper.mapping.symbol import SymbolDetector
 
 
 def create_map_from_semantic_mask(
@@ -379,6 +379,8 @@ if __name__ == "__main__":
             debug_dir=output_dir,
             debug_prefix=filename,
         )
+
+        # Create map and store results to disk
         lanelet_map = Map(lanemarkings, symbols, lanelets, origin, px2m, proj)
         lanelet_map.export_lanelet2(output_dir / f"{segmentation_file.stem}.osm")
         lanelet_map.export_lanemarkings(output_dir / f"{segmentation_file.stem}.pkl")

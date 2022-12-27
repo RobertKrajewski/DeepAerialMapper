@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import yaml
-from deepaerialmapper.map_creation.masks import SemanticClass
+from deepaerialmapper.mapping.masks import SemanticClass
 
 
 config_dir = "configs/mask/demo.yaml"

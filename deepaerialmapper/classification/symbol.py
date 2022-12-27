@@ -17,7 +17,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
 from deepaerialmapper.classification.symbol_builder import SymbolDataset, set_files
-from deepaerialmapper.map_creation.masks import SemanticClass
+from deepaerialmapper.mapping.masks import SemanticClass
 
 
 def classify(symbol_cnt: List[np.ndarray], mask, cls_order, cls_weight, scale=255):

@@ -10,8 +10,8 @@ import numpy as np
 import scipy
 from loguru import logger
 
-from deepaerialmapper.map_creation.lanemarking import Lanemarking
-from deepaerialmapper.map_creation.masks import ClassMask
+from deepaerialmapper.mapping.lanemarking import Lanemarking
+from deepaerialmapper.mapping.masks import ClassMask
 
 
 @dataclass
