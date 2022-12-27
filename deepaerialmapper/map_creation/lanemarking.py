@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import List
 
 import numpy as np
-from typing import List
 
 
 @dataclass

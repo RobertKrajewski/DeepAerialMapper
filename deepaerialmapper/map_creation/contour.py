@@ -1,15 +1,14 @@
+import itertools
 import math
 import pprint
 import random
-import numpy as np
-import cv2
-from typing import List, Tuple, Dict
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
 
+import cv2
+import numpy as np
 import scipy
 from loguru import logger
-import itertools
-
-from dataclasses import dataclass
 
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 from deepaerialmapper.map_creation.masks import ClassMask

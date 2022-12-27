@@ -1,8 +1,8 @@
 from typing import Tuple
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 from deepaerialmapper.map_creation.masks import ClassMask

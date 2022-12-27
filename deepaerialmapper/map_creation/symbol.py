@@ -1,16 +1,15 @@
 import glob
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
+from typing import List, Optional
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
-from typing import Optional, List
-
-from deepaerialmapper.map_creation.masks import SemanticClass, SegmentationMask
-from deepaerialmapper.classification.symbol import classify
 from loguru import logger
 
-import matplotlib.pyplot as plt
+from deepaerialmapper.classification.symbol import classify
+from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass
 
 
 @dataclass

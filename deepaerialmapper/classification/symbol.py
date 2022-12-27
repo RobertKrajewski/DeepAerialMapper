@@ -1,21 +1,23 @@
 from __future__ import print_function
+
 import argparse
+import os
+from typing import List
+
+import albumentations as A
+import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim.lr_scheduler import StepLR
-import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from loguru import logger
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
-import cv2
-import os
-import numpy as np
-from typing import List
-from deepaerialmapper.map_creation.masks import SemanticClass
 
 from deepaerialmapper.classification.symbol_builder import SymbolDataset, set_files
-from loguru import logger
+from deepaerialmapper.map_creation.masks import SemanticClass
 
 
 def classify(symbol_cnt: List[np.ndarray], mask, cls_order, cls_weight, scale=255):

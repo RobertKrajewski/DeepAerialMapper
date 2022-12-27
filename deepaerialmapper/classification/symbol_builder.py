@@ -1,9 +1,9 @@
-from torch.utils.data import Dataset
-import cv2
 import glob
 import random
 
+import cv2
 from loguru import logger
+from torch.utils.data import Dataset
 
 
 def flatten(t):

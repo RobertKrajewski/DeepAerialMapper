@@ -1,13 +1,12 @@
-from itertools import chain
 import itertools
-
-import numpy as np
-from pathlib import Path
-import cv2
-from typing import List, Dict, Union, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from itertools import chain
+from pathlib import Path
+from typing import Dict, List, Tuple, Union
 
+import cv2
+import numpy as np
 from loguru import logger
 from scipy import linalg
 
