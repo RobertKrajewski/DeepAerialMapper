@@ -316,7 +316,7 @@ if __name__ == "__main__":
         f"Found {len(segmentation_files)} segmentation mask(s) in {args.input}:\n{segmentation_files}"
     )
     if not segmentation_files:
-        exit()
+        raise ValueError("No segmentation masks given! Stopping!")
 
     output_dir = args.output
     if "<now>" in output_dir:
