@@ -363,7 +363,7 @@ if __name__ == "__main__":
             proj = file_meta["proj"]
         else:
             logger.warning("Could not find meta information! Using defaults!")
-            origin = (293692.76, 5628231.55)
+            origin = (294406.50, 5628828.23)
             px2m = 0.05
             proj = "epsg:25832"
 
