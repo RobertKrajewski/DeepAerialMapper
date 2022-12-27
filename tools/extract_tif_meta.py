@@ -1,8 +1,8 @@
-import json
 import pathlib
 import pprint
 
 import typer
+import yaml
 from loguru import logger
 from PIL import Image
 
@@ -37,9 +37,9 @@ def extract_tif_meta(image_dir: str) -> None:
         }
     logger.info(f"Extracted meta information:\n{pprint.pformat(meta)}")
 
-    output_filepath = image_dir / "meta.json"
+    output_filepath = image_dir / "meta.yaml"
     with output_filepath.open("w") as f:
-        json.dump(meta, f, indent=2)
+        yaml.safe_dump(meta, f, indent=2, sort_keys=False)
     logger.info(f"Stored results to {output_filepath}")
 
 
