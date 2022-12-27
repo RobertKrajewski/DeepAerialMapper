@@ -367,11 +367,10 @@ if __name__ == "__main__":
             px2m = 0.05
             proj = "epsg:25832"
 
-        ignore_info = [
-            value for key, value in ignore.items() if key.startswith(filename)
-        ]
-        if len(ignore_info):
-            ignore_info = ignore_info[0]["regions"]
+        ignore_info = []
+        if filename in ignore:
+            ignore_info = ignore[filename]["regions"]
+        logger.info(f"Found {len(ignore_info)} ignore regions!")
 
         lanemarkings, lanelets, symbols = create_map_from_semantic_mask(
             seg_mask,
