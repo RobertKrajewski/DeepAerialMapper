@@ -7,7 +7,6 @@ from typing import List, Tuple, Dict
 
 import scipy
 from loguru import logger
-from sklearn.linear_model import LinearRegression
 import itertools
 
 from dataclasses import dataclass
@@ -619,7 +618,9 @@ class ContourManager:
 
             groups = np.flatnonzero(np.diff(np.r_[0, np.invert(is_border), 0]) != 0).reshape(-1, 2) - [0, 1]
             for g in groups:
-                new_contours.append(contour[g[0]:g[1]])
+                new_contour = contour[g[0]:g[1]]
+                if len(new_contour):
+                    new_contours.append(new_contour)
         return ContourManager(new_contours)
 
     def filter_by_length(self, max_length: int, min_length: int) -> Tuple["ContourManager", "ContourManager"]:
