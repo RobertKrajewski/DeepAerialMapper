@@ -1,21 +1,21 @@
 import argparse
 import shutil
-from datetime import datetime
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
+from typing import FrozenSet, List, Set
 
-import numpy as np
 import cv2
-from loguru import logger
-from typing import Set, FrozenSet, List
+import numpy as np
 import yaml
+from loguru import logger
 
-from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
-from deepaerialmapper.mapping.contour import ContourSegment, ContourManager
-from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping import Map
+from deepaerialmapper.mapping.contour import ContourManager, ContourSegment
+from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
 from deepaerialmapper.mapping.symbol import SymbolDetector
+from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 
 
 def create_map_from_semantic_mask(

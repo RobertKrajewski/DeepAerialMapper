@@ -1,8 +1,8 @@
-import numpy as np
 import cv2
+import numpy as np
 import yaml
-from deepaerialmapper.mapping.masks import SemanticClass
 
+from deepaerialmapper.mapping.masks import SemanticClass
 
 config_dir = "configs/mask/demo.yaml"
 with open(config_dir, "r") as f:

@@ -9,9 +9,13 @@ from deepaerialmapper.mapping.symbol import Symbol
 
 class Map:
     def __init__(
-            self, lanemarkings, lanelets: Set[FrozenSet[int, int]], symbols: List[Symbol], px2m: float,
-            origin: Tuple[float, float],
-            proj: str
+        self,
+        lanemarkings,
+        lanelets: Set[FrozenSet[int, int]],
+        symbols: List[Symbol],
+        px2m: float,
+        origin: Tuple[float, float],
+        proj: str,
     ) -> None:
         """Representation of a map including geo-referenced lanemarkings, symbols and lanelets.
         Implements export to lanelet2 format as well as storing lanemarkings for evaluation purposes.
@@ -62,7 +66,7 @@ class Map:
             for point in lanemarking.contour:
                 utm_x = self._origin[0] + self._px2m * point[0, 0]
                 utm_y = (
-                        self._origin[1] - self._px2m * point[0, 1]
+                    self._origin[1] - self._px2m * point[0, 1]
                 )  # "-" as UTM has an inverted y-axis
                 long, lat = proj(utm_x, utm_y, inverse=True)
                 point_str = f"<node id='{len(nodes) + 1}' visible='true' version='1' lat='{lat}' lon='{long}' />"
@@ -107,7 +111,9 @@ class Map:
 
     def export_lanemarkings(self, filepath: Path) -> None:
         """Export lanemarkings only to a pickle file for accuracy evaluation."""
-        contours = [l.contour[:, 0, :] for l in self._lanemarkings]  # Remove obsolete axis 1
+        contours = [
+            l.contour[:, 0, :] for l in self._lanemarkings
+        ]  # Remove obsolete axis 1
 
         with filepath.open("wb") as f:
             pickle.dump(contours, f)

@@ -1,16 +1,18 @@
 import json
 import pickle
 from pathlib import Path
-
-import numpy as np
-from loguru import logger
-import typer
 from typing import Dict, List
 
-from eval import Polyline, LanemarkingEvaluator
+import numpy as np
+import typer
+from loguru import logger
+
+from eval import LanemarkingEvaluator, Polyline
 
 
-def load_lanemarking_dataset(predictions_dir: str, groundtruth_dir: str) -> Dict[str, Dict[str, List[Polyline]]]:
+def load_lanemarking_dataset(
+    predictions_dir: str, groundtruth_dir: str
+) -> Dict[str, Dict[str, List[Polyline]]]:
     """Load manually annotated gt-lanemarkings and automatically generated lanemarkings from disk.
 
     :param predictions_dir: Path to directory containing `.pkl` lanemarking files. These files are automatically created
@@ -63,7 +65,9 @@ def load_lanemarking_dataset(predictions_dir: str, groundtruth_dir: str) -> Dict
     return dataset
 
 
-def evaluate_lanemarkings(predictions_dir: str, groundtruth_dir: str) -> Dict[str, float]:
+def evaluate_lanemarkings(
+    predictions_dir: str, groundtruth_dir: str
+) -> Dict[str, float]:
     """Evaluate the quality of automatically created lanemarkings (including road borders).
 
     Compares a dataset of automatically create lanemarkings using this library against manually annotated groundtruth
