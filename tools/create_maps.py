@@ -13,22 +13,20 @@ import yaml
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 from deepaerialmapper.map_creation.contour import ContourSegment, ContourManager
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
-from deepaerialmapper.export.map import Lanelet2Map
+from deepaerialmapper.map_creation import Map
 from deepaerialmapper.map_creation.masks import SegmentationMask, SemanticClass
 from deepaerialmapper.map_creation.symbol import SymbolDetector
 
 
 def create_map_from_semantic_mask(
     seg_mask,
-    origin,
     px2m,
-    proj,
     ignore_regions: List,
     skip_lanelets=True,
     skip_symbols=False,
     debug_dir=None,
     debug_prefix="",
-) -> Lanelet2Map:
+) -> Map:
 
     # Find road borders
     road_mask = seg_mask.class_mask(
@@ -128,7 +126,7 @@ def create_map_from_semantic_mask(
         symbols = symbol_detector.detect_patterns(seg_mask, cls_weight)
         logger.info(f"Detected {len(symbols)} symbols")
 
-    return Lanelet2Map(lanemarkings, symbols, lanelets, origin, px2m, proj)
+    return lanemarkings, lanelets, symbols
 
 
 def derive_lanemarkings(
@@ -165,7 +163,7 @@ def derive_lanemarkings(
     return lanemarkings
 
 
-def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set:
+def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set[FrozenSet[int, int]]:
     valid_mask = seg_mask.class_mask(
         [SemanticClass.ROAD, SemanticClass.SYMBOL, SemanticClass.LANEMARKING]
     )
@@ -375,14 +373,13 @@ if __name__ == "__main__":
         if len(ignore_info):
             ignore_info = ignore_info[0]["regions"]
 
-        lanelet_map = create_map_from_semantic_mask(
+        lanemarkings, lanelets, symbols = create_map_from_semantic_mask(
             seg_mask,
-            origin,
             px2m,
-            proj,
             ignore_info,
             debug_dir=output_dir,
             debug_prefix=filename,
         )
+        lanelet_map = Map(lanemarkings, symbols, lanelets, origin, px2m, proj)
         lanelet_map.export_lanelet2(output_dir / f"{segmentation_file.stem}.osm")
         lanelet_map.export_lanemarkings(output_dir / f"{segmentation_file.stem}.pkl")
