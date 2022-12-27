@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from deepaerialmapper.eval.lanemarking import (
-    resample_polyline, LanemarkingEvaluator,
+    resample_polyline,
+    LanemarkingEvaluator,
 )
 
 
@@ -52,7 +53,9 @@ def test_lanemarking_evaluator_evaluate_map() -> None:
 
     pred = [np.array([[1, 0], [1, 10]]), np.array([[6, 0], [6, 5]])]
 
-    evaluator = LanemarkingEvaluator(resample_dist=4.0, max_matching_dist=15.0, debug=False)
+    evaluator = LanemarkingEvaluator(
+        resample_dist=4.0, max_matching_dist=15.0, debug=False
+    )
     results = evaluator._evaluate_map(gt, pred)
 
     assert results["precision"] == 1.0
@@ -76,6 +79,8 @@ def test_evaluate_lanemarking_dataset() -> None:
         },
     }
 
-    evaluator = LanemarkingEvaluator(resample_dist=4.0, max_matching_dist=15.0, debug=False)
+    evaluator = LanemarkingEvaluator(
+        resample_dist=4.0, max_matching_dist=15.0, debug=False
+    )
     results = evaluator.evaluate_dataset(dataset)
     assert results == {"precision": 1.0, "recall": 0.75, "rmse": 1.0}
