@@ -523,7 +523,8 @@ class ContourManager:
                 logger.warning(
                     f"Small shit happened. Contour was grouped into {len(grouped_group_contours)} contours :/")
 
-            new_contours.append(grouped_group_contours[0].contour)
+            # Add all new created groups
+            new_contours.extend(cm.contour for cm in grouped_group_contours)
 
         return new_contours
 
