@@ -7,8 +7,7 @@ from loguru import logger
 import typer
 from typing import Dict, List
 
-from deepaerialmapper.eval import evaluate_lanemarking_dataset
-from eval.lanemarking import Polyline
+from eval import Polyline, LanemarkingEvaluator
 
 
 def load_lanemarking_dataset(predictions_dir: str, groundtruth_dir: str) -> Dict[str, Dict[str, List[Polyline]]]:
@@ -77,7 +76,8 @@ def evaluate_lanemarkings(predictions_dir: str, groundtruth_dir: str) -> Dict[st
     :return: Evaluation results micro-averaged over all maps. Stores precision, recall and RMSE.
     """
     dataset = load_lanemarking_dataset(groundtruth_dir, predictions_dir)
-    results = evaluate_lanemarking_dataset(dataset)
+    evaluator = LanemarkingEvaluator()
+    results = evaluator.evaluate_dataset(dataset)
     logger.info(
         f"Precision: {results['precision']:.2f}, Recall: {results['recall']:.2f}, RMSE: {results['rmse']:.2f}"
     )
