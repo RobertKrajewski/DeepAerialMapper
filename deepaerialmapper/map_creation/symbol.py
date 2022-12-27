@@ -25,9 +25,12 @@ class Symbol:
     def show(self):
         max_x, max_y = np.max(self.contour, axis=(0, 1))
         img = np.zeros((max_y + 10, max_x + 10), np.uint8)
-        img = cv2.polylines(img, [self.contour], isClosed=True, color=(255, 255, 255), thickness=2)
+        img = cv2.polylines(
+            img, [self.contour], isClosed=True, color=(255, 255, 255), thickness=2
+        )
 
         import matplotlib.pyplot as plt
+
         plt.imshow(img)
         plt.show()
 
@@ -45,7 +48,8 @@ class SymbolDetector:
         for pattern_type in self.pattern_types:
 
             filepaths = glob.glob(
-                os.path.join(self.pattern_dir, pattern_type) + '/*.png')  # if pattern is not png, needs to be changed.
+                os.path.join(self.pattern_dir, pattern_type) + "/*.png"
+            )  # if pattern is not png, needs to be changed.
             for filepath in filepaths:
                 mask = cv2.imread(filepath)
 
@@ -57,18 +61,17 @@ class SymbolDetector:
                 mask = cv2.resize(mask, dsize=None, fx=7.0 / 7.0, fy=7.0 / 7.0)
 
                 # Smooth the contour of the template
-                cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                cnts, _ = cv2.findContours(
+                    mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                )
                 epsilon = 0.008 * cv2.arcLength(cnts[0], True)
                 approx = cv2.approxPolyDP(cnts[0], epsilon, True)
 
                 ref_point = self.extract_ref(approx)
 
-                symbols.append(Symbol(
-                    name=pattern_type,
-                    contour=approx,
-                    image=mask,
-                    ref=ref_point
-                ))
+                symbols.append(
+                    Symbol(name=pattern_type, contour=approx, image=mask, ref=ref_point)
+                )
 
         return symbols
 
@@ -81,7 +84,8 @@ class SymbolDetector:
         far_dist = 0
         for i, point_i in enumerate(approx):
             for j, point_j in enumerate(approx):
-                if i >= j: continue
+                if i >= j:
+                    continue
 
                 dist_ij = np.linalg.norm(point_i - point_j)
                 if dist_ij > far_dist:
@@ -89,18 +93,27 @@ class SymbolDetector:
                     ref_points = [point_i, point_j]
 
         if debug:
-            mask = np.zeros(np.append(np.squeeze(np.flip(np.amax(approx, axis=0), axis=None)), 3))  # zeros(y, x, 3)
+            mask = np.zeros(
+                np.append(np.squeeze(np.flip(np.amax(approx, axis=0), axis=None)), 3)
+            )  # zeros(y, x, 3)
             cv2.drawContours(mask, [approx], -1, (0, 255, 0), 1)
 
             mask = cv2.circle(mask, ref_points[0][0], 2, (255, 0, 0), thickness=-1)
             mask = cv2.circle(mask, ref_points[1][0], 2, (255, 0, 0), thickness=-1)
-            plt.imshow(mask, cmap='jet')
+            plt.imshow(mask, cmap="jet")
             plt.show()
 
         return ref_points
 
-    def detect_patterns(self, seg_mask: SegmentationMask, cls_weight, min_area: int = 1000, max_area: int = 6000,
-                        debug: bool = False, dbg_rescale: float = 0.75) -> List[Symbol]:
+    def detect_patterns(
+        self,
+        seg_mask: SegmentationMask,
+        cls_weight,
+        min_area: int = 1000,
+        max_area: int = 6000,
+        debug: bool = False,
+        dbg_rescale: float = 0.75,
+    ) -> List[Symbol]:
         """
         using shape match to classify the detected symbol
         load symbol template and compare the detected ones with them, find the most likely one.
@@ -116,7 +129,9 @@ class SymbolDetector:
 
         _, mask = cv2.threshold(symbol_mask, 150, 255, 0)
 
-        symbol_cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        symbol_cnts, _ = cv2.findContours(
+            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         detections = []
         for cnt in symbol_cnts:
@@ -138,6 +153,8 @@ class SymbolDetector:
 
             # svm doesn't need to go through all patterns.
             best_name = classify(cnt, seg_mask, self.patterns, cls_weight)
-            detections.append(Symbol(name=best_name, contour=approx, ref=ref_point, box=box))
+            detections.append(
+                Symbol(name=best_name, contour=approx, ref=ref_point, box=box)
+            )
 
         return detections

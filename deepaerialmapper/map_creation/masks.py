@@ -13,6 +13,7 @@ from scipy import linalg
 
 from deepaerialmapper.map_creation.lanemarking import Lanemarking
 
+
 class SemanticClass(Enum):
     BLACK = 0
     VEGETATION = 2
@@ -53,6 +54,7 @@ palette_map = {
 @dataclass
 class ClassMask:
     """Binary segmentation mask"""
+
     mask: np.ndarray
     class_names: List[SemanticClass]
 
@@ -87,10 +89,17 @@ class ClassMask:
         plt.imshow(img)
         plt.show()
 
-    def show(self, contours=None, lanemarkings=None, background=None, show=True, window_name: str = "",
-             random: bool = False) -> Tuple[
-        np.ndarray, np.ndarray]:
+    def show(
+        self,
+        contours=None,
+        lanemarkings=None,
+        background=None,
+        show=True,
+        window_name: str = "",
+        random: bool = False,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         from deepaerialmapper.map_creation.contour import ContourManager
+
         if isinstance(contours, ContourManager):
             contours = contours.contours
 
@@ -99,6 +108,7 @@ class ClassMask:
         img_c = None
         img_overlay = None
         import matplotlib.pyplot as plt
+
         if show:
             plt.imshow(img)
         if contours is not None or lanemarkings is not None:
@@ -116,12 +126,14 @@ class ClassMask:
                         line_color = (150, 255, 0)
 
                     # Draw line
-                    img_c = cv2.polylines(img_c,
-                                          [contour],
-                                          isClosed=False,
-                                          color=line_color,
-                                          thickness=19,
-                                          lineType=cv2.LINE_AA)
+                    img_c = cv2.polylines(
+                        img_c,
+                        [contour],
+                        isClosed=False,
+                        color=line_color,
+                        thickness=19,
+                        lineType=cv2.LINE_AA,
+                    )
 
                     # Draw intermediate points
                     for i in range(contour.shape[0]):
@@ -148,12 +160,14 @@ class ClassMask:
                         color = (150, 255, 0)
 
                     # Draw line
-                    img_c = cv2.polylines(img_c,
-                                          [contour],
-                                          isClosed=False,
-                                          color=color,
-                                          thickness=3,
-                                          lineType=cv2.LINE_AA)
+                    img_c = cv2.polylines(
+                        img_c,
+                        [contour],
+                        isClosed=False,
+                        color=color,
+                        thickness=3,
+                        lineType=cv2.LINE_AA,
+                    )
 
                     # Draw intermediate points
                     for i in range(contour.shape[0]):
@@ -169,7 +183,9 @@ class ClassMask:
                             color = (0, 0, 255)  # blue
                             size = 3
 
-                        img_c = cv2.circle(img_c, contour[i, 0], size, color, thickness=-1)
+                        img_c = cv2.circle(
+                            img_c, contour[i, 0], size, color, thickness=-1
+                        )
 
             img_overlay = cv2.addWeighted(img, 0.5, img_c, 0.5, 0.0)
             if show:
@@ -177,7 +193,7 @@ class ClassMask:
 
         if show:
             figManager = plt.get_current_fig_manager()
-            figManager.window.state('zoomed')
+            figManager.window.state("zoomed")
             if window_name:
                 fig = plt.gcf()
                 fig.canvas.set_window_title(window_name)
@@ -201,7 +217,9 @@ class ClassMask:
             mask = cv2.medianBlur(mask, blur_size // border_effect, 0)
 
             # minimize the aliasing after blur
-            mask[edge_size:-edge_size, edge_size:-edge_size] = mask_center[edge_size:-edge_size, edge_size:-edge_size]
+            mask[edge_size:-edge_size, edge_size:-edge_size] = mask_center[
+                edge_size:-edge_size, edge_size:-edge_size
+            ]
 
         else:
             mask = cv2.medianBlur(mask, blur_size, 0)
@@ -261,15 +279,25 @@ class ClassMask:
         for region in ignore_regions:
             shape = region["shape_attributes"]
             if shape["name"] == "polygon":
-                xcoords = shape['all_points_x']
-                ycoords = shape['all_points_y']
-            elif shape['name'] == 'rect':
-                xcoords = [shape['x'] - shape['width'], shape['x'] - shape['width'],
-                           shape['x'] + shape['width'], shape['x'] + shape['width']]
-                ycoords = [shape['y'] - shape['height'], shape['y'] + shape['height'],
-                           shape['y'] + shape['height'], shape['y'] - shape['height']]
+                xcoords = shape["all_points_x"]
+                ycoords = shape["all_points_y"]
+            elif shape["name"] == "rect":
+                xcoords = [
+                    shape["x"] - shape["width"],
+                    shape["x"] - shape["width"],
+                    shape["x"] + shape["width"],
+                    shape["x"] + shape["width"],
+                ]
+                ycoords = [
+                    shape["y"] - shape["height"],
+                    shape["y"] + shape["height"],
+                    shape["y"] + shape["height"],
+                    shape["y"] - shape["height"],
+                ]
 
-            polygon = np.column_stack([xcoords, ycoords]).reshape((-1, 1, 2)).astype(np.int32)
+            polygon = (
+                np.column_stack([xcoords, ycoords]).reshape((-1, 1, 2)).astype(np.int32)
+            )
 
             cv2.fillPoly(new_mask, [polygon], 0)
 
@@ -280,7 +308,7 @@ class ClassMask:
         return ClassMask(new_mask, self.class_names)
 
     def find_split_points(self, debug=False) -> Tuple["ClassMask", List[np.ndarray]]:
-        """ Eliminate splitpoint from mask """
+        """Eliminate splitpoint from mask"""
 
         # Find all split points
         split_ptrs = []
@@ -292,9 +320,16 @@ class ClassMask:
         # Remove split points from contour mask
         new_mask = np.copy(self.mask)
         for idx_x, idx_y in split_ptrs:
-            for (nb_idx_y, nb_idx_x) in [(idx_y + dy, idx_x + dx) for (dy, dx) in
-                                         itertools.product([-1, 0, 1], [-1, 0, 1])]:
-                if (nb_idx_y < 0) or (nb_idx_x < 0) or (nb_idx_y >= self.shape[0]) or (nb_idx_x >= self.shape[1]):
+            for (nb_idx_y, nb_idx_x) in [
+                (idx_y + dy, idx_x + dx)
+                for (dy, dx) in itertools.product([-1, 0, 1], [-1, 0, 1])
+            ]:
+                if (
+                    (nb_idx_y < 0)
+                    or (nb_idx_x < 0)
+                    or (nb_idx_y >= self.shape[0])
+                    or (nb_idx_x >= self.shape[1])
+                ):
                     # if index is out of image, then skip
                     continue
                 new_mask[nb_idx_y, nb_idx_x] = 0
@@ -319,26 +354,39 @@ class ClassMask:
                     visited[j_split_ptr] = True
                     close_ptrs.append(other_point)
 
-            filtered_split_ptrs.append(np.round(np.mean(close_ptrs, axis=0)).astype(int))
+            filtered_split_ptrs.append(
+                np.round(np.mean(close_ptrs, axis=0)).astype(int)
+            )
             visited[i_split_ptr] = True
 
-        logger.debug(f"Removed {len(split_ptrs) - len(filtered_split_ptrs)} split points due to proximity.")
-        logger.debug(f"Found {len(filtered_split_ptrs)} remaining split points:\n{np.asarray(filtered_split_ptrs)}")
+        logger.debug(
+            f"Removed {len(split_ptrs) - len(filtered_split_ptrs)} split points due to proximity."
+        )
+        logger.debug(
+            f"Found {len(filtered_split_ptrs)} remaining split points:\n{np.asarray(filtered_split_ptrs)}"
+        )
 
         # Visualize for debugging
         if debug:
             drawing = cv2.cvtColor(new_mask.astype(np.uint8) * 255, cv2.COLOR_GRAY2RGB)
 
             for idx_x, idx_y in filtered_split_ptrs:
-                for (nb_idx_y, nb_idx_x) in [(idx_y + dy, idx_x + dx) for (dy, dx) in
-                                             itertools.product([-1, 0, 1], [-1, 0, 1])]:
-                    if (nb_idx_y < 0) or (nb_idx_x < 0) or (nb_idx_y >= self.shape[0]) or (
-                            nb_idx_x >= self.shape[1]):
+                for (nb_idx_y, nb_idx_x) in [
+                    (idx_y + dy, idx_x + dx)
+                    for (dy, dx) in itertools.product([-1, 0, 1], [-1, 0, 1])
+                ]:
+                    if (
+                        (nb_idx_y < 0)
+                        or (nb_idx_x < 0)
+                        or (nb_idx_y >= self.shape[0])
+                        or (nb_idx_x >= self.shape[1])
+                    ):
                         # if index is out of image, then skip
                         continue
                     drawing[nb_idx_y, nb_idx_x] = (255, 0, 0)
 
             import matplotlib.pyplot as plt
+
             plt.imshow(drawing)
             plt.show()
 
@@ -349,12 +397,17 @@ class ClassMask:
         # Extract 3x3 contour around x,y
         # Easy case: Not at the mask border
         if 1 <= x <= contour_mask.shape[1] and 1 <= y <= contour_mask.shape[0]:
-            contour_mask = contour_mask[y - 1:y + 2, x - 1:x + 2]
+            contour_mask = contour_mask[y - 1 : y + 2, x - 1 : x + 2]
         else:
             c = np.zeros((3, 3))
             # Complex case at mask border
             for dx, dy in itertools.product([-1, 0, 1], [-1, 0, 1]):
-                if y + dy < 0 or x + dx < 0 or y + dy >= contour_mask.shape[0] or x + dx >= contour_mask.shape[1]:
+                if (
+                    y + dy < 0
+                    or x + dx < 0
+                    or y + dy >= contour_mask.shape[0]
+                    or x + dx >= contour_mask.shape[1]
+                ):
                     continue
                 c[1 + dy, 1 + dx] = contour_mask[y + dy, x + dx]
             contour_mask = c
@@ -366,7 +419,9 @@ class ClassMask:
         if contour_mask.sum() <= 3:
             return False
 
-        is_visited = np.zeros_like(contour_mask, bool)  # Remember which neighbours we already visited
+        is_visited = np.zeros_like(
+            contour_mask, bool
+        )  # Remember which neighbours we already visited
         num_lines = 0  # How many lines start from this point
 
         # Hard coding all the neighbours that need to be checked
@@ -390,7 +445,12 @@ class ClassMask:
                 continue
 
             # Check if we are at border
-            if y + dy < 0 or x + dx < 0 or y + dy >= contour_mask.shape[0] or x + dx >= contour_mask.shape[1]:
+            if (
+                y + dy < 0
+                or x + dx < 0
+                or y + dy >= contour_mask.shape[0]
+                or x + dx >= contour_mask.shape[1]
+            ):
                 continue
 
             # Visit every neighbour only once
@@ -413,7 +473,12 @@ class ClassMask:
                     new_x = x + dx2
                     new_y = y + dy2
 
-                    if new_y < 0 or new_x < 0 or new_y >= contour_mask.shape[0] or new_x >= contour_mask.shape[1]:
+                    if (
+                        new_y < 0
+                        or new_x < 0
+                        or new_y >= contour_mask.shape[0]
+                        or new_x >= contour_mask.shape[1]
+                    ):
                         continue
 
                     if contour_mask[new_y, new_x] and not is_visited[new_y, new_x]:
@@ -432,12 +497,16 @@ class ClassMask:
 
     def intersection(self, other_mask: "ClassMask") -> "ClassMask":
         mask = np.bitwise_and(self.mask, other_mask.mask)
-        return ClassMask(mask, self.class_names)  # TODO: class names don't make sense here anymore?
+        return ClassMask(
+            mask, self.class_names
+        )  # TODO: class names don't make sense here anymore?
 
     def subtraction(self, other_mask: "ClassMask") -> "ClassMask":
         """Remove pixels of other mask from this mask"""
         mask = np.bitwise_and(self.mask, ~other_mask.mask)
-        return ClassMask(mask, self.class_names)  # TODO: class names don't make sense here anymore?
+        return ClassMask(
+            mask, self.class_names
+        )  # TODO: class names don't make sense here anymore?
 
     def contours(self, method=cv2.CHAIN_APPROX_SIMPLE) -> np.ndarray:
         """
@@ -453,6 +522,7 @@ class ClassMask:
 @dataclass
 class SegmentationMask:
     """Multi-Class segmentation mask"""
+
     mask: np.ndarray
     palette: Dict[SemanticClass, List[int]]
 
@@ -463,7 +533,9 @@ class SegmentationMask:
     def __getitem__(self, item):
         return self.mask.__getitem__(item)
 
-    def class_mask(self, class_names: Union[SemanticClass, List[SemanticClass]]) -> ClassMask:
+    def class_mask(
+        self, class_names: Union[SemanticClass, List[SemanticClass]]
+    ) -> ClassMask:
         """Returns a binary mask for one or more classes"""
         # Convert to list in case only a single class name is given
         if isinstance(class_names, SemanticClass):
@@ -471,7 +543,9 @@ class SegmentationMask:
 
         output_mask = np.zeros(self.mask.shape[:2], dtype=bool)
         for class_name in class_names:
-            output_mask = np.bitwise_or(output_mask, np.all(self.mask == self.palette[class_name], axis=2))
+            output_mask = np.bitwise_or(
+                output_mask, np.all(self.mask == self.palette[class_name], axis=2)
+            )
 
         return ClassMask(output_mask, class_names)
 
@@ -485,5 +559,6 @@ class SegmentationMask:
 
     def show(self):
         import matplotlib.pyplot as plt
+
         plt.imshow(self.mask)
         plt.show()

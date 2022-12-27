@@ -18,6 +18,7 @@ from deepaerialmapper.map_creation.masks import ClassMask
 @dataclass
 class ContourSegment:
     """Class for keeping track of an item in inventory."""
+
     coordinates: np.ndarray
     center: np.ndarray
     slope: float
@@ -27,35 +28,44 @@ class ContourSegment:
     def from_coordinates(coordinates: np.ndarray):
         if len(coordinates) == 1:
             # There is no pca for line with single element
-            return ContourSegment(coordinates=coordinates,
-                                  center=np.mean(coordinates, axis=(0, 1)),
-                                  slope=0.0,
-                                  b=1.0)
+            return ContourSegment(
+                coordinates=coordinates,
+                center=np.mean(coordinates, axis=(0, 1)),
+                slope=0.0,
+                b=1.0,
+            )
 
         from sklearn.decomposition import PCA
+
         r = PCA(n_components=2).fit(coordinates[:, 0, :2])
 
-        return ContourSegment(coordinates=coordinates,
-                              center=np.mean(coordinates, axis=(0, 1)),
-                              slope=r.components_[0][0],
-                              b=r.components_[0][1])
+        return ContourSegment(
+            coordinates=coordinates,
+            center=np.mean(coordinates, axis=(0, 1)),
+            slope=r.components_[0][0],
+            b=r.components_[0][1],
+        )
 
     def abs_angle_difference(self, other_segment: "ContourSegment") -> float:
-        ''' Compute angle between two vectors '''
+        """Compute angle between two vectors"""
         vector_1 = np.asarray([self.slope, self.b])
         vector_2 = np.asarray([other_segment.slope, other_segment.b])
         unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
         unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
         dot_product = np.dot(unit_vector_1, unit_vector_2)
-        return np.minimum(np.abs(np.arccos(dot_product)), np.pi - np.abs(np.arccos(dot_product)))
+        return np.minimum(
+            np.abs(np.arccos(dot_product)), np.pi - np.abs(np.arccos(dot_product))
+        )
 
     def min_distance_point(self, point: np.ndarray) -> float:
-        """ Distance between ax+by+c = 0 and (x,y)"""
+        """Distance between ax+by+c = 0 and (x,y)"""
         a, b, (c_x, c_y) = self.slope, self.b, self.center
-        c = - a * c_x + b * c_y  # Calculate y-axis offset
+        c = -a * c_x + b * c_y  # Calculate y-axis offset
 
         x, y = point
-        return np.abs((a * x - b * y + c) / (np.sqrt(a ** 2 + b ** 2)))  # Project point on orthogonal slope
+        return np.abs(
+            (a * x - b * y + c) / (np.sqrt(a**2 + b**2))
+        )  # Project point on orthogonal slope
 
     def distance_center_to_point(self, point: np.ndarray) -> float:
         return np.abs(np.linalg.norm(self.center - point))
@@ -76,7 +86,9 @@ class ContourSegment:
         return ContourSegment.from_coordinates(all_coords)
 
     @staticmethod
-    def filter_by_length(contour: "Contour", threshold_length: float) -> Tuple["Contour", "Contour"]:
+    def filter_by_length(
+        contour: "Contour", threshold_length: float
+    ) -> Tuple["Contour", "Contour"]:
         # TODO: Start/End point has effect on quality.
         long_segments: Contour = []
         short_segments: Contour = []
@@ -90,23 +102,31 @@ class ContourSegment:
 
     def touches_mask_border(self, shape: Tuple) -> bool:
         coords = self.coordinates
-        if any(coords[:, :, 0] == shape[1] - 1) or any(coords[:, :, 0] == 0) or \
-                any(coords[:, :, 1] == shape[0] - 1) or any(coords[:, :, 1] == 0):
+        if (
+            any(coords[:, :, 0] == shape[1] - 1)
+            or any(coords[:, :, 0] == 0)
+            or any(coords[:, :, 1] == shape[0] - 1)
+            or any(coords[:, :, 1] == 0)
+        ):
             return True
         return False
 
     def compute_pca(self):
-        """ Compute the eigenvector and centroid position of a contour based on PCA analysis """
+        """Compute the eigenvector and centroid position of a contour based on PCA analysis"""
         pts = self.coordinates
 
-        mean, eigenvectors, eigenvalues = cv2.PCACompute2(np.reshape(pts.astype(float), (-1, 2)), np.empty(0))
+        mean, eigenvectors, eigenvalues = cv2.PCACompute2(
+            np.reshape(pts.astype(float), (-1, 2)), np.empty(0)
+        )
         # Find the end_point two points
         end_pointA = mean + eigenvectors[0] * np.max(np.linalg.norm(mean - pts, axis=2))
         end_pointB = mean - eigenvectors[0] * np.max(np.linalg.norm(mean - pts, axis=2))
         center = [mean[0, 0], mean[0, 1]]
         orientation = np.arctan2(eigenvectors[0, 1], eigenvectors[0, 0])
 
-        simple_orientation = np.arctan2(pts[-1, 0, 1] - pts[0, 0, 1], pts[-1, 0, 0] - pts[0, 0, 0])
+        simple_orientation = np.arctan2(
+            pts[-1, 0, 1] - pts[0, 0, 1], pts[-1, 0, 0] - pts[0, 0, 0]
+        )
 
         # Make sure that orientation always is "away" from the first coordinate
         if abs(orientation - simple_orientation) > np.pi / 2:
@@ -135,11 +155,17 @@ class ContourSegment:
         distances = []
         # Calculate L2 distance for every startpoint endpoint combination
         for idx_self, idx_other in itertools.product([-1], [0, -1]):
-            distances.append(np.linalg.norm(self.coordinates[idx_self] - other_segment.coordinates[idx_other]))
+            distances.append(
+                np.linalg.norm(
+                    self.coordinates[idx_self] - other_segment.coordinates[idx_other]
+                )
+            )
 
         return min(distances), 0.0
 
-    def oriented_distance_point(self, o_center: np.ndarray, endpoint: bool = False) -> float:
+    def oriented_distance_point(
+        self, o_center: np.ndarray, endpoint: bool = False
+    ) -> float:
         _, _, center, _, ev, _ = self.compute_pca()
         center = np.asarray(center)
 
@@ -170,10 +196,10 @@ class ContourSegment:
 
         """
         p = self.coordinates[0, 0]
-        r = (self.coordinates[-1, 0] - self.coordinates[0, 0])
+        r = self.coordinates[-1, 0] - self.coordinates[0, 0]
 
         q = other_segment.coordinates[0, 0]
-        s = (other_segment.coordinates[-1, 0] - other_segment.coordinates[0, 0])
+        s = other_segment.coordinates[-1, 0] - other_segment.coordinates[0, 0]
 
         denom = np.cross(r, s)
         if denom == 0.0:
@@ -198,23 +224,31 @@ class ContourSegment:
 
             if intersection is not None and 0 < intersection[1] < 1:
                 intersection_point = intersection[0]
-                distance = self.oriented_distance_point(np.asarray(intersection_point), endpoint=True)
+                distance = self.oriented_distance_point(
+                    np.asarray(intersection_point), endpoint=True
+                )
                 if distance[0] > 0:
                     return intersection_point, distance
 
         return None
 
     @staticmethod
-    def group_by_angle(contours: "Contour", mask_shape, GROUP_SIZE, ANGLE_DIFF) -> "Contour":
+    def group_by_angle(
+        contours: "Contour", mask_shape, GROUP_SIZE, ANGLE_DIFF
+    ) -> "Contour":
         # TODO: As slope is adapted continuously, curve might be considered as line i.e. effective angle diff changes
         # TODO: Check error of describing a contour by a line
         # Approximate the road contours by polygon lines
         segments: Contour = []
         for contour in contours:
             prev_segment_valid = False  # Track whether previous segment was valid, i.e. not at image border
-            num_segments = math.ceil(len(contour) / GROUP_SIZE)  # How many initial groups will be assigned
+            num_segments = math.ceil(
+                len(contour) / GROUP_SIZE
+            )  # How many initial groups will be assigned
             for i_segment in range(num_segments):
-                segment_coords = contour[i_segment * GROUP_SIZE: (i_segment + 1) * GROUP_SIZE]
+                segment_coords = contour[
+                    i_segment * GROUP_SIZE : (i_segment + 1) * GROUP_SIZE
+                ]
                 segment = ContourSegment.from_coordinates(segment_coords)
 
                 # Skip segments at the image border. Therefore, check if any pixel is at the image border
@@ -223,7 +257,10 @@ class ContourSegment:
                     continue
 
                 # Merge two consecutive segments, if the angle between those are similar
-                if prev_segment_valid and segment.abs_angle_difference(segments[-1]) < ANGLE_DIFF:
+                if (
+                    prev_segment_valid
+                    and segment.abs_angle_difference(segments[-1]) < ANGLE_DIFF
+                ):
                     # Replace last two centers by new mean center
                     prev_segment = segments.pop()
                     segments.append(prev_segment.merge(segment))
@@ -235,8 +272,9 @@ class ContourSegment:
         return segments
 
     @staticmethod
-    def match_by_distance(segments: "Contour", min_dist: float, max_dist: float, max_angle_diff: float) -> Dict[
-        int, int]:
+    def match_by_distance(
+        segments: "Contour", min_dist: float, max_dist: float, max_angle_diff: float
+    ) -> Dict[int, int]:
         """Tries to group segments by distance and orientation to groups.
 
         Condition for grouping counter contours on the other side of the road
@@ -256,7 +294,9 @@ class ContourSegment:
         group_ids = {}  # Result dictionary mapping segment idx to group id
 
         for i_segment, first_segment in enumerate(segments):
-            segment_distances = []  # Keep a list of distances between current segment and all other segments
+            segment_distances = (
+                []
+            )  # Keep a list of distances between current segment and all other segments
 
             # Only handle each segment once as first segment
             if i_segment in checked_contours:
@@ -274,12 +314,16 @@ class ContourSegment:
                 angle_gap = first_segment.abs_angle_difference(second_segment)
 
                 # Only consider potential match if requirements are met
-                if angle_gap < max_angle_diff and \
-                        min_dist < distance1 < max_dist and \
-                        min_dist < distance2 < max_dist and \
-                        min_dist < distance3 < max_dist * 2:
+                if (
+                    angle_gap < max_angle_diff
+                    and min_dist < distance1 < max_dist
+                    and min_dist < distance2 < max_dist
+                    and min_dist < distance3 < max_dist * 2
+                ):
 
-                    segment_distances.append(distance1 + distance2 + distance3 + angle_gap * 100)
+                    segment_distances.append(
+                        distance1 + distance2 + distance3 + angle_gap * 100
+                    )
                 else:
                     segment_distances.append(np.Inf)
 
@@ -289,14 +333,19 @@ class ContourSegment:
             else:
                 # Select the counter contour with minimum loss to group
                 i_matched_segment = np.argmin(segment_distances)
-                checked_contours.append(i_matched_segment)  # this contours will not be counted again.
+                checked_contours.append(
+                    i_matched_segment
+                )  # this contours will not be counted again.
 
             if i_segment not in group_ids and i_matched_segment not in group_ids:
                 # Create a new group
                 group_ids[i_segment] = next_group_id
                 group_ids[i_matched_segment] = next_group_id
                 next_group_id += 1
-            elif i_segment not in group_ids.keys() and i_matched_segment in group_ids.keys():
+            elif (
+                i_segment not in group_ids.keys()
+                and i_matched_segment in group_ids.keys()
+            ):
                 # Add to existing group
                 group_ids[i_segment] = group_ids[i_matched_segment]
             else:
@@ -325,10 +374,12 @@ class ContourManager:
         """Remove duplicate coordinates from all contours"""
         new_contours = []
         for c in self.contours:
-            num_duplicate_coord = (np.unique(c, axis=0, return_counts=True)[1] == 2).sum()
+            num_duplicate_coord = (
+                np.unique(c, axis=0, return_counts=True)[1] == 2
+            ).sum()
             if num_duplicate_coord > 0.15 * len(c):
-                """ if there is too many overlap, append only half segment of the contour"""
-                new_contours.append(c[:len(c) // 2])
+                """if there is too many overlap, append only half segment of the contour"""
+                new_contours.append(c[: len(c) // 2])
             else:
                 new_contours.append(c)
 
@@ -336,19 +387,33 @@ class ContourManager:
 
     def group_at_split_points(self, split_ptrs, debug=True):
         # Two end points are the most farest points in thin lane marking.
-        end_A = [i[0].squeeze() for i in self.contours]  # one end point of the thin contour
-        end_B = [i[-1].squeeze() for i in self.contours]  # another end point of the thin contour
+        end_A = [
+            i[0].squeeze() for i in self.contours
+        ]  # one end point of the thin contour
+        end_B = [
+            i[-1].squeeze() for i in self.contours
+        ]  # another end point of the thin contour
 
         # If contour is too short, then use full contours.
         segments_A = [
-            ContourSegment.from_coordinates(c[:2]) if len(c) > 2 else ContourSegment.from_coordinates(c) for
-            c in self.contours]  # First half
+            ContourSegment.from_coordinates(c[:2])
+            if len(c) > 2
+            else ContourSegment.from_coordinates(c)
+            for c in self.contours
+        ]  # First half
         segments_B = [
-            ContourSegment.from_coordinates(c[-2:]) if len(c) > 2 else ContourSegment.from_coordinates(c) for
-            c in self.contours]  # Second half
+            ContourSegment.from_coordinates(c[-2:])
+            if len(c) > 2
+            else ContourSegment.from_coordinates(c)
+            for c in self.contours
+        ]  # Second half
 
-        segments_full = [ContourSegment.from_coordinates(i) if len(i) <= 2 else ContourSegment.from_coordinates(i) for i
-                         in self.contours]
+        segments_full = [
+            ContourSegment.from_coordinates(i)
+            if len(i) <= 2
+            else ContourSegment.from_coordinates(i)
+            for i in self.contours
+        ]
 
         idxes_close = []  # 3 indexes next to split point
         idx_separate = len(end_A)
@@ -360,24 +425,36 @@ class ContourManager:
             """
 
             if mode == "full":
-                return segments_full[close_idxs[idx_1] % idx_separate].abs_angle_difference(
-                    segments_full[close_idxs[idx_2] % idx_separate])
+                return segments_full[
+                    close_idxs[idx_1] % idx_separate
+                ].abs_angle_difference(segments_full[close_idxs[idx_2] % idx_separate])
 
             # mode == "half"
             first_idx = close_idxs[idx_1]
             second_idx = close_idxs[idx_2]
 
-            first_segment = segments_B[first_idx % idx_separate] if first_idx >= idx_separate else segments_A[first_idx]
-            second_segment = segments_B[second_idx % idx_separate] if second_idx >= idx_separate else segments_A[
-                second_idx]
+            first_segment = (
+                segments_B[first_idx % idx_separate]
+                if first_idx >= idx_separate
+                else segments_A[first_idx]
+            )
+            second_segment = (
+                segments_B[second_idx % idx_separate]
+                if second_idx >= idx_separate
+                else segments_A[second_idx]
+            )
             angle = first_segment.abs_angle_difference(second_segment)
             return angle
 
         # Find 3 close contours around the split_points
         for i_split_ptr, split_ptr in enumerate(split_ptrs):
             logger.debug(f"Grouping around split point {i_split_ptr} at {split_ptr}")
-            dist_2_A = scipy.linalg.norm(split_ptr - end_A, axis=1)  # distance btw segment A and split point
-            dist_2_B = scipy.linalg.norm(split_ptr - end_B, axis=1)  # distance btw segment B and split point
+            dist_2_A = scipy.linalg.norm(
+                split_ptr - end_A, axis=1
+            )  # distance btw segment A and split point
+            dist_2_B = scipy.linalg.norm(
+                split_ptr - end_B, axis=1
+            )  # distance btw segment B and split point
             dist_2 = np.hstack((dist_2_A, dist_2_B))
 
             # Three closest ctrs
@@ -387,11 +464,14 @@ class ContourManager:
             max_endpoint_distance = 6
             # Check that all selected end points are in proximity (<=5px distance)
             if np.all(dist_2[close_idxs] > max_endpoint_distance):
-                logger.warning(f"All endpoints are too far away from {i_split_ptr}th split point {split_ptr}: {np.array2string(dist_2[close_idxs], precision=2)}")
+                logger.warning(
+                    f"All endpoints are too far away from {i_split_ptr}th split point {split_ptr}: {np.array2string(dist_2[close_idxs], precision=2)}"
+                )
                 continue
             elif not np.all(dist_2[close_idxs] <= max_endpoint_distance):
                 logger.warning(
-                    f"At least one endpoint is too far away from {i_split_ptr}th split point {split_ptr}: {np.array2string(dist_2[close_idxs], precision=2)}")
+                    f"At least one endpoint is too far away from {i_split_ptr}th split point {split_ptr}: {np.array2string(dist_2[close_idxs], precision=2)}"
+                )
 
             mode = "half"
             angle_0_1 = compute_angle(0, 1, mode=mode)
@@ -432,10 +512,15 @@ class ContourManager:
         # TODO: If same contour is in different idxes_close
 
         # Prevent merging lines with themselves
-        filter_idxes_close = [i % idx_separate for i in idxes_close if
-                              np.unique(i % idx_separate).__len__() > 1]
+        filter_idxes_close = [
+            i % idx_separate
+            for i in idxes_close
+            if np.unique(i % idx_separate).__len__() > 1
+        ]
         if len(filter_idxes_close) < len(idxes_close):
-            logger.debug(f"Removed {len(idxes_close) - len(filter_idxes_close)} merges of contours with themselves")
+            logger.debug(
+                f"Removed {len(idxes_close) - len(filter_idxes_close)} merges of contours with themselves"
+            )
 
         # Remove duplicate merges
         filter_idxes_close = np.unique(filter_idxes_close, axis=0)
@@ -447,24 +532,28 @@ class ContourManager:
 
         grouped_idxes_close = self._group_contours(filter_idxes_close)
 
-        logger.debug(f"Created {len(grouped_idxes_close)} merge groups:\n{pprint.pformat(grouped_idxes_close)}")
+        logger.debug(
+            f"Created {len(grouped_idxes_close)} merge groups:\n{pprint.pformat(grouped_idxes_close)}"
+        )
 
         new_contours = []
         # merge contours around split points if they are parallel.
-        new_contours.extend(self._merge_contours(self.contours,
-                                                 grouped_idxes_close))
+        new_contours.extend(self._merge_contours(self.contours, grouped_idxes_close))
 
         # include non split points related segments.
         grouped_idxes = sum(grouped_idxes_close, [])
-        new_contours.extend(ctr for i_ctr, ctr in enumerate(self.contours) if
-                            i_ctr not in grouped_idxes)
+        new_contours.extend(
+            ctr for i_ctr, ctr in enumerate(self.contours) if i_ctr not in grouped_idxes
+        )
 
         # Remove contours consisting of a single point only
         new_contours = [c for c in new_contours if len(c) > 1]
 
         return ContourManager(new_contours)
 
-    def split_lanes(self, angle_threshold: float = 30.0, length_threshold: float = 100.0) -> "ContourManager":
+    def split_lanes(
+        self, angle_threshold: float = 30.0, length_threshold: float = 100.0
+    ) -> "ContourManager":
 
         new_contours = []
         for contour in self.contours:
@@ -472,29 +561,46 @@ class ContourManager:
 
             for i in range(len(contour) - 3):
 
-                current_segment = ContourSegment.from_coordinates(np.concatenate([contour[new_idx:i + 2]], axis=0))
-                next_segment = ContourSegment.from_coordinates(np.concatenate([contour[i + 1:i + 3]], axis=0))
+                current_segment = ContourSegment.from_coordinates(
+                    np.concatenate([contour[new_idx : i + 2]], axis=0)
+                )
+                next_segment = ContourSegment.from_coordinates(
+                    np.concatenate([contour[i + 1 : i + 3]], axis=0)
+                )
 
-                if (current_segment.abs_angle_difference(next_segment) > math.radians(
-                        angle_threshold)):  # this 5 should be adjusted!.
-                    ''' segments exceed the threshold and current segment is not too short fraction '''
+                if current_segment.abs_angle_difference(next_segment) > math.radians(
+                    angle_threshold
+                ):  # this 5 should be adjusted!.
+                    """segments exceed the threshold and current segment is not too short fraction"""
                     new_idx = i + 1
 
                 if i == len(contour) - 4:
-                    ''' Append the last point '''
+                    """Append the last point"""
                     new_contours.append(
-                        np.ascontiguousarray(np.concatenate([current_segment.merge(next_segment).coordinates], axis=0)))
+                        np.ascontiguousarray(
+                            np.concatenate(
+                                [current_segment.merge(next_segment).coordinates],
+                                axis=0,
+                            )
+                        )
+                    )
                 else:
-                    new_contours.append(np.ascontiguousarray(np.concatenate([current_segment.coordinates], axis=0)))
+                    new_contours.append(
+                        np.ascontiguousarray(
+                            np.concatenate([current_segment.coordinates], axis=0)
+                        )
+                    )
 
             if new_idx == 0:
-                ''' no split in the current contour '''
+                """no split in the current contour"""
                 new_contours.append(contour)
 
         return ContourManager(new_contours)
 
     @staticmethod
-    def _merge_contours(contours: List[np.ndarray], groups: List[List[int]]) -> List[np.ndarray]:
+    def _merge_contours(
+        contours: List[np.ndarray], groups: List[List[int]]
+    ) -> List[np.ndarray]:
         new_contours = []
         for i_group, group in enumerate(groups):
             logger.debug(f"Merging contour group {i_group} containing contours {group}")
@@ -503,25 +609,33 @@ class ContourManager:
 
             # Now merging necessary
             if len(group_contours) == 1:
-                logger.debug("Group contains only single contour, no merging necessary!")
+                logger.debug(
+                    "Group contains only single contour, no merging necessary!"
+                )
                 new_contours.append(group_contours[0])
                 continue
 
             # Merge relevant contours
             group_contours = ContourManager(group_contours)
-            grouped_group_contours, ungrouped_group_contours = group_contours.group(max_gap_size=15,
-                                                                                    distance_mode="endpoints")
+            grouped_group_contours, ungrouped_group_contours = group_contours.group(
+                max_gap_size=15, distance_mode="endpoints"
+            )
 
             if len(ungrouped_group_contours):
-                logger.warning(f"Shit happened. {len(ungrouped_group_contours)} contours were not grouped.")
+                logger.warning(
+                    f"Shit happened. {len(ungrouped_group_contours)} contours were not grouped."
+                )
 
             if len(grouped_group_contours) == 0:
-                logger.error("Big shit happened. Contour could not be grouped at all :(")
+                logger.error(
+                    "Big shit happened. Contour could not be grouped at all :("
+                )
                 continue
 
             if len(grouped_group_contours) > 1:
                 logger.warning(
-                    f"Small shit happened. Contour was grouped into {len(grouped_group_contours)} contours :/")
+                    f"Small shit happened. Contour was grouped into {len(grouped_group_contours)} contours :/"
+                )
 
             # Add all new created groups
             new_contours.extend(cm.contour for cm in grouped_group_contours)
@@ -551,7 +665,10 @@ class ContourManager:
             else:
                 # Shit - we have to merge groups
                 # Replace all occurrences of higher group idx by lower group idx
-                contour2group = [idx if idx != higher_group_idx else lower_group_idx for idx in contour2group]
+                contour2group = [
+                    idx if idx != higher_group_idx else lower_group_idx
+                    for idx in contour2group
+                ]
 
         new_groups = []
         contour2group = np.asarray(contour2group)
@@ -561,7 +678,13 @@ class ContourManager:
                 continue
 
             # For each group, get all assigned contours
-            new_groups.append([i_c for i_c in range(max_contour_id + 1) if contour2group[i_c] == group_idx])
+            new_groups.append(
+                [
+                    i_c
+                    for i_c in range(max_contour_id + 1)
+                    if contour2group[i_c] == group_idx
+                ]
+            )
 
         return new_groups
 
@@ -576,8 +699,8 @@ class ContourManager:
             split_points = []
 
             for i_point in range(1, len(contour) - 1):
-                p = ContourSegment.from_coordinates(contour[i_point - 1:i_point + 1])
-                n = ContourSegment.from_coordinates(contour[i_point:i_point + 2])
+                p = ContourSegment.from_coordinates(contour[i_point - 1 : i_point + 1])
+                n = ContourSegment.from_coordinates(contour[i_point : i_point + 2])
                 print(contour[i_point][0], p.abs_angle_difference(n))
                 if p.abs_angle_difference(n) >= math.radians(angle_threshold):
                     split_points.append(i_point)
@@ -614,17 +737,25 @@ class ContourManager:
         # Split contours at mask border
         new_contours = []
         for contour in self.contours:
-            is_border = (contour[:, 0, 0] == 0) | (contour[:, 0, 1] == 0) | \
-                        (contour[:, 0, 0] == mask_shape[1] - 1) | (contour[:, 0, 1] == mask_shape[0] - 1)
+            is_border = (
+                (contour[:, 0, 0] == 0)
+                | (contour[:, 0, 1] == 0)
+                | (contour[:, 0, 0] == mask_shape[1] - 1)
+                | (contour[:, 0, 1] == mask_shape[0] - 1)
+            )
 
-            groups = np.flatnonzero(np.diff(np.r_[0, np.invert(is_border), 0]) != 0).reshape(-1, 2) - [0, 1]
+            groups = np.flatnonzero(
+                np.diff(np.r_[0, np.invert(is_border), 0]) != 0
+            ).reshape(-1, 2) - [0, 1]
             for g in groups:
-                new_contour = contour[g[0]:g[1]]
+                new_contour = contour[g[0] : g[1]]
                 if len(new_contour):
                     new_contours.append(new_contour)
         return ContourManager(new_contours)
 
-    def filter_by_length(self, max_length: int, min_length: int) -> Tuple["ContourManager", "ContourManager"]:
+    def filter_by_length(
+        self, max_length: int, min_length: int
+    ) -> Tuple["ContourManager", "ContourManager"]:
         """Assumes sampled contours"""
         short_contours, long_contours = [], []
         for contour in self.contours:
@@ -635,10 +766,16 @@ class ContourManager:
 
         return ContourManager(short_contours), ContourManager(long_contours)
 
-    def group(self, max_gap_size: int = 500, debug: bool = False, distance_mode="centers_oriented") -> Tuple[
-        "ContourManager", "ContourManager"]:
+    def group(
+        self,
+        max_gap_size: int = 500,
+        debug: bool = False,
+        distance_mode="centers_oriented",
+    ) -> Tuple["ContourManager", "ContourManager"]:
         """Assumes to be given short lanemarking contours (e.g. from `filter_by_length()`)"""
-        contour_segments = [ContourSegment.from_coordinates(contour) for contour in self.contours]
+        contour_segments = [
+            ContourSegment.from_coordinates(contour) for contour in self.contours
+        ]
 
         # Calculate pairwise distances
         num_segments = len(contour_segments)
@@ -646,14 +783,20 @@ class ContourManager:
         for i_contour, contour in enumerate(contour_segments):
             for j_contour, other_contour in enumerate(contour_segments):
                 if i_contour == j_contour:
-                    pairwise_distances[i_contour, j_contour] = np.array([np.inf, np.inf])
+                    pairwise_distances[i_contour, j_contour] = np.array(
+                        [np.inf, np.inf]
+                    )
                     continue
 
                 if distance_mode == "centers_oriented":
-                    pairwise_distances[i_contour, j_contour] = contour.oriented_distance(other_contour)
+                    pairwise_distances[
+                        i_contour, j_contour
+                    ] = contour.oriented_distance(other_contour)
                 else:
                     # Calculate distance between start and endpoints
-                    pairwise_distances[i_contour, j_contour] = contour.endpoint_distance(other_contour)
+                    pairwise_distances[
+                        i_contour, j_contour
+                    ] = contour.endpoint_distance(other_contour)
 
         # For each contour find best contour in front (to the right side in mage) by minimal longitudinal distance
         cost = pairwise_distances[..., 0] + np.abs(pairwise_distances[..., 1]) * 8
@@ -667,9 +810,11 @@ class ContourManager:
         # Remove long distance assignments
         cost[pairwise_distances[..., 0] > 300] = np.inf
 
-        #cost[(np.abs(pairwise_distances[..., 1]) + np.abs(
+        # cost[(np.abs(pairwise_distances[..., 1]) + np.abs(
         #    pairwise_distances[..., 0]) / 10) > 1] = np.inf  # Remove high lat distance possible matches
-        cost[np.abs(pairwise_distances[..., 1]) > 25] = np.inf  # Remove high lat distance possible matches
+        cost[
+            np.abs(pairwise_distances[..., 1]) > 25
+        ] = np.inf  # Remove high lat distance possible matches
 
         # TODO: Check orientation difference
 
@@ -685,7 +830,9 @@ class ContourManager:
             i_contour_best = np.argmin(cost[i_contour])
             if cost[i_contour, i_contour_best] > max_gap_size:
                 # Too far away match
-                logger.debug(f"Did not match with {i_contour_best} due too large cost {cost[i_contour, i_contour_best]:.2f}")
+                logger.debug(
+                    f"Did not match with {i_contour_best} due too large cost {cost[i_contour, i_contour_best]:.2f}"
+                )
                 continue
 
             conn[i_contour, 1] = i_contour_best  # Set next
@@ -697,9 +844,17 @@ class ContourManager:
         # show best connected contour
         if debug:
             import matplotlib.pyplot as plt
+
             for i_c, c in enumerate(contour_segments):
-                plt.plot(c.coordinates[:, 0, 0], c.coordinates[:, 0, 1], c='g', linewidth=3)
-                plt.scatter(c.coordinates[:1, 0, 0], c.coordinates[:1, 0, 1], c='k', linewidths=1)
+                plt.plot(
+                    c.coordinates[:, 0, 0], c.coordinates[:, 0, 1], c="g", linewidth=3
+                )
+                plt.scatter(
+                    c.coordinates[:1, 0, 0],
+                    c.coordinates[:1, 0, 1],
+                    c="k",
+                    linewidths=1,
+                )
                 plt.text(c.center[0], c.center[1], str(i_c))
 
             for i_c, c in enumerate(conn):
@@ -709,12 +864,16 @@ class ContourManager:
                     continue
                 # plt.plot([contour_segments[f].center[0], contour_segments[s].center[0]],
                 #          [contour_segments[f].center[1], contour_segments[s].center[1]], c='b', linewidth=3)
-                plt.arrow(contour_segments[f].center[0],
-                          contour_segments[f].center[1],
-                          contour_segments[s].center[0] - contour_segments[f].center[0],
-                          contour_segments[s].center[1] - contour_segments[f].center[1], color='b', width=5)
+                plt.arrow(
+                    contour_segments[f].center[0],
+                    contour_segments[f].center[1],
+                    contour_segments[s].center[0] - contour_segments[f].center[0],
+                    contour_segments[s].center[1] - contour_segments[f].center[1],
+                    color="b",
+                    width=5,
+                )
 
-            plt.gca().axis('equal')
+            plt.gca().axis("equal")
             plt.grid()
             plt.gca().invert_yaxis()
             plt.show()
@@ -746,10 +905,14 @@ class ContourManager:
             # TODO: Check if segments have roughly same size
             new_group = [c.coordinates for c in new_group]
             if len(new_group) == 1:
-                short_lanemarkings.append(Lanemarking(new_group, Lanemarking.LanemarkingType.DASHED))
+                short_lanemarkings.append(
+                    Lanemarking(new_group, Lanemarking.LanemarkingType.DASHED)
+                )
             else:
                 # dashed_lanemarkings.append(ContourSegment.merge_list(new_group).coordinates)
-                dashed_lanemarkings.append(Lanemarking(new_group, Lanemarking.LanemarkingType.DASHED))
+                dashed_lanemarkings.append(
+                    Lanemarking(new_group, Lanemarking.LanemarkingType.DASHED)
+                )
 
         # short_lanemarkings = ContourManager(short_lanemarkings)
         # dashed_lanemarkings = ContourManager(dashed_lanemarkings)
@@ -774,14 +937,29 @@ class ContourManager:
 
         img = np.zeros((max_y + 10, max_x + 10, 3), np.uint8)
         for i_contour, contour in enumerate(self.contours):
-            img = cv2.polylines(img, [contour], isClosed=False,
-                                color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
-                                thickness=2)
-            img = cv2.putText(img, str(i_contour), np.mean(contour, axis=(0, 1)).astype(int), cv2.FONT_HERSHEY_PLAIN,
-                              1.5, (255, 0, 0))
+            img = cv2.polylines(
+                img,
+                [contour],
+                isClosed=False,
+                color=(
+                    random.randint(0, 255),
+                    random.randint(0, 255),
+                    random.randint(0, 255),
+                ),
+                thickness=2,
+            )
+            img = cv2.putText(
+                img,
+                str(i_contour),
+                np.mean(contour, axis=(0, 1)).astype(int),
+                cv2.FONT_HERSHEY_PLAIN,
+                1.5,
+                (255, 0, 0),
+            )
 
         if show:
             import matplotlib.pyplot as plt
+
             plt.imshow(img)
             plt.show()
 

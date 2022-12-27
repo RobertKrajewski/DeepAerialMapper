@@ -9,7 +9,9 @@ from typing import List, Dict, Any
 import typer
 
 
-def resample_polygon(xy: np.ndarray, step_width: float = 4, add_final_point=True) -> np.ndarray:
+def resample_polygon(
+    xy: np.ndarray, step_width: float = 4, add_final_point=True
+) -> np.ndarray:
     """Resample polygon to get points at equidistant positions along polygon"""
 
     # Cumulative Euclidean distance between successive polygon points.
@@ -25,23 +27,32 @@ def resample_polygon(xy: np.ndarray, step_width: float = 4, add_final_point=True
     if add_final_point and d.max() - d_sampled[-1] >= step_width / 2:
         xy_interp = np.c_[
             np.r_[np.interp(d_sampled, d, xy[:, 0]), xy[-1, 0]],
-            np.r_[np.interp(d_sampled, d, xy[:, 1]), xy[-1, 1]]
+            np.r_[np.interp(d_sampled, d, xy[:, 1]), xy[-1, 1]],
         ]
     else:
         xy_interp = np.c_[
             np.r_[np.interp(d_sampled, d, xy[:, 0])],
-            np.r_[np.interp(d_sampled, d, xy[:, 1])]
+            np.r_[np.interp(d_sampled, d, xy[:, 1])],
         ]
 
     return xy_interp
 
 
-def evaluate_map(groundtruth: List[np.ndarray], prediction: List[np.ndarray], resample_dist: int = 4,
-                 max_match_distance: float = 15., debug: bool = False):
+def evaluate_map(
+    groundtruth: List[np.ndarray],
+    prediction: List[np.ndarray],
+    resample_dist: int = 4,
+    max_match_distance: float = 15.0,
+    debug: bool = False,
+):
     # Interpolate all lines
-    groundtruth = np.concatenate([resample_polygon(g, resample_dist, add_final_point=True) for g in groundtruth])
+    groundtruth = np.concatenate(
+        [resample_polygon(g, resample_dist, add_final_point=True) for g in groundtruth]
+    )
     groundtruth = np.unique(groundtruth, axis=0)
-    prediction = np.concatenate([resample_polygon(p, resample_dist, add_final_point=True) for p in prediction])
+    prediction = np.concatenate(
+        [resample_polygon(p, resample_dist, add_final_point=True) for p in prediction]
+    )
     prediction = np.unique(prediction, axis=0)
 
     # rows = gt, cols = preds
@@ -53,6 +64,7 @@ def evaluate_map(groundtruth: List[np.ndarray], prediction: List[np.ndarray], re
 
     if debug:
         import matplotlib.pyplot as plt
+
         plt.scatter(groundtruth[:, 0], groundtruth[:, 1])
         plt.scatter(prediction[:, 0], prediction[:, 1])
 
@@ -69,13 +81,17 @@ def evaluate_map(groundtruth: List[np.ndarray], prediction: List[np.ndarray], re
             distances.append(cost[i_gt, i_p])
             if debug:
                 # Line connecting both points
-                plt.plot([groundtruth[i_gt, 0], prediction[i_p, 0]], [groundtruth[i_gt, 1], prediction[i_p, 1]], c="k")
+                plt.plot(
+                    [groundtruth[i_gt, 0], prediction[i_p, 0]],
+                    [groundtruth[i_gt, 1], prediction[i_p, 1]],
+                    c="k",
+                )
 
     if debug:
         plt.grid()
         plt.scatter(prediction[fp, 0], prediction[fp, 1])
         plt.scatter(groundtruth[fn, 0], groundtruth[fn, 1])
-        plt.gca().axis('equal')
+        plt.gca().axis("equal")
 
         plt.gca().invert_yaxis()
         plt.tight_layout()
@@ -88,7 +104,7 @@ def evaluate_map(groundtruth: List[np.ndarray], prediction: List[np.ndarray], re
         "fn": len(fn),
         "fp": len(fp),
         "distances": distances,
-        "rmse": np.sqrt(np.mean(np.square(distances)))
+        "rmse": np.sqrt(np.mean(np.square(distances))),
     }
 
 
@@ -99,7 +115,8 @@ def evaluate_dataset(dataset: Dict[str, Dict[str, Any]]):
         map_results.append(evaluate_map(map_["groundtruth"], map_["prediction"]))
         r = map_results[-1]
         logger.info(
-            f"Results for {name}: Precision: {r['precision']:.2f}, Recall: {r['recall']:.2f}, RMSE: {r['rmse']:.2f}")
+            f"Results for {name}: Precision: {r['precision']:.2f}, Recall: {r['recall']:.2f}, RMSE: {r['rmse']:.2f}"
+        )
 
     tp = sum(r["tp"] for r in map_results)
     fp = sum(r["fp"] for r in map_results)
@@ -115,7 +132,7 @@ def evaluate_dataset(dataset: Dict[str, Dict[str, Any]]):
         "rmse": rmse,
         "tp": tp,
         "fp": fp,
-        "fn": fn
+        "fn": fn,
     }
 
 
@@ -124,20 +141,20 @@ def main(predictions_dir: str, groundtruth_dir: str):
 
     for predictions_file in sorted(Path(predictions_dir).glob("*.pkl")):
         logger.info(f"Loading results from {predictions_file}")
-        map_ = {
-            "groundtruth": [],
-            "prediction": [],
-            "ignore": []
-        }
+        map_ = {"groundtruth": [], "prediction": [], "ignore": []}
 
         with open(predictions_file, "rb") as f:
             predictions = pickle.load(f)
         map_["prediction"] = predictions
 
         # Get matching gt file
-        groundtruth_path = Path(groundtruth_dir) / (f"test_{predictions_file.stem}_json.json")
+        groundtruth_path = Path(groundtruth_dir) / (
+            f"test_{predictions_file.stem}_json.json"
+        )
         if not groundtruth_path.exists():
-            logger.error(f"Found no matching groundtruth annotations for {predictions_file.name}. Skipping!")
+            logger.error(
+                f"Found no matching groundtruth annotations for {predictions_file.name}. Skipping!"
+            )
             continue
 
         with groundtruth_path.open() as f:
@@ -158,7 +175,9 @@ def main(predictions_dir: str, groundtruth_dir: str):
     logger.info(f"Loaded data for {len(dataset)} files")
 
     results = evaluate_dataset(dataset)
-    logger.info(f"Precision: {results['precision']:.2f}, Recall: {results['recall']:.2f}, RMSE: {results['rmse']:.2f}")
+    logger.info(
+        f"Precision: {results['precision']:.2f}, Recall: {results['recall']:.2f}, RMSE: {results['rmse']:.2f}"
+    )
 
 
 if __name__ == "__main__":

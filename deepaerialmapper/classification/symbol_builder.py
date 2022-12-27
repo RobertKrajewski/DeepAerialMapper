@@ -19,25 +19,29 @@ def set_files(train_data_path, test_data_path):
 
     # 1.
     # get all the paths from train_data_path and append image paths and class to to respective lists
-    for data_path in sorted(glob.glob(train_data_path + '/*')):
-        classes.append(data_path.split('/')[-1])
-        train_image_paths.append(glob.glob(data_path + '/*'))
+    for data_path in sorted(glob.glob(train_data_path + "/*")):
+        classes.append(data_path.split("/")[-1])
+        train_image_paths.append(glob.glob(data_path + "/*"))
 
     train_image_paths = list(flatten(train_image_paths))
     random.shuffle(train_image_paths)
 
-    logger.info('train_image_path example: ', train_image_paths[0])
-    logger.info(f'classes: {classes}')
+    logger.info("train_image_path example: ", train_image_paths[0])
+    logger.info(f"classes: {classes}")
 
     # 2.
     # create the test_image_paths
     test_image_paths = []
-    for data_path in sorted(glob.glob(test_data_path + '/*')):
-        test_image_paths.append(glob.glob(data_path + '/*'))
+    for data_path in sorted(glob.glob(test_data_path + "/*")):
+        test_image_paths.append(glob.glob(data_path + "/*"))
 
     test_image_paths = list(flatten(test_image_paths))
 
-    logger.info("Train size: {}, Test size: {}".format(len(train_image_paths), len(test_image_paths)))
+    logger.info(
+        "Train size: {}, Test size: {}".format(
+            len(train_image_paths), len(test_image_paths)
+        )
+    )
 
     #######################################################
     #      Create dictionary for class indexes
@@ -53,6 +57,7 @@ def set_files(train_data_path, test_data_path):
 #               Define Dataset Class
 #######################################################
 
+
 class SymbolDataset(Dataset):
     def __init__(self, image_paths, class_to_idx, image_type, transform=False):
         self.image_paths = image_paths
@@ -66,12 +71,12 @@ class SymbolDataset(Dataset):
     def __getitem__(self, idx):
         image_filepath = self.image_paths[idx]
         image = cv2.imread(image_filepath)
-        if self.image_type == 'RGB':
+        if self.image_type == "RGB":
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         else:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        label_name = image_filepath.split('/')[-2]
+        label_name = image_filepath.split("/")[-2]
         label = self.class_to_idx[label_name]
         if self.transform is not None:
             image = self.transform(image=image)["image"]

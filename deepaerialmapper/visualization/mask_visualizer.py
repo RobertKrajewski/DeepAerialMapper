@@ -12,11 +12,18 @@ class MaskVisualizer:
     def __init__(self):
         self._idx_sel = -1
 
-    def show(self, class_mask: ClassMask, contours=None, lanemarkings=None, background=None, show=True,
-             window_name: str = "",
-             random: bool = False) -> Tuple[
-        np.ndarray, np.ndarray]:
+    def show(
+        self,
+        class_mask: ClassMask,
+        contours=None,
+        lanemarkings=None,
+        background=None,
+        show=True,
+        window_name: str = "",
+        random: bool = False,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         from deepaerialmapper.map_creation.contour import ContourManager
+
         if isinstance(contours, ContourManager):
             contours = contours.contours
 
@@ -29,7 +36,7 @@ class MaskVisualizer:
 
         if show:
             self._fig, self._ax = plt.subplots()
-            self._fig.canvas.mpl_connect('key_press_event', self._key_press)
+            self._fig.canvas.mpl_connect("key_press_event", self._key_press)
             if img_overlay is None:
                 self._ax.imshow(img_c)
             else:
@@ -37,7 +44,7 @@ class MaskVisualizer:
 
             # Maximise window
             figManager = plt.get_current_fig_manager()
-            figManager.window.state('zoomed')
+            figManager.window.state("zoomed")
 
             # Add window title
             if window_name:
@@ -58,26 +65,26 @@ class MaskVisualizer:
         if self._contours is not None:
             contours = self._contours
             if self._idx_sel >= 0 and self._idx_sel < len(contours):
-                contours = contours[self._idx_sel:self._idx_sel + 1]
+                contours = contours[self._idx_sel : self._idx_sel + 1]
             img_c = self._draw_contours(contours, img_c, self._random)
 
         if self._lanemarkings is not None:
             lanemarkings = self._lanemarkings
             if self._idx_sel >= 0 and self._idx_sel < len(lanemarkings):
-                lanemarkings = lanemarkings[self._idx_sel:self._idx_sel + 1]
+                lanemarkings = lanemarkings[self._idx_sel : self._idx_sel + 1]
             img_c = self._draw_lanemarkings(img_c, lanemarkings, self._random)
 
         img_overlay = cv2.addWeighted(self._img, 0.5, img_c, 0.5, 0.0)
         return img_c, img_overlay
 
     def _key_press(self, event):
-        if event.key == '1':
+        if event.key == "1":
             d = -5
-        elif event.key == '2':
+        elif event.key == "2":
             d = -1
-        elif event.key == '3':
+        elif event.key == "3":
             d = +1
-        elif event.key == ',':
+        elif event.key == ",":
             d = +5
         else:
             d = 0
@@ -116,18 +123,22 @@ class MaskVisualizer:
 
                 points.append((contour, i, 3, color))
 
-            text_pos = np.array(contour[len(contour) // 2, 0]) + np.random.uniform(-3, 3, 2)
+            text_pos = np.array(contour[len(contour) // 2, 0]) + np.random.uniform(
+                -3, 3, 2
+            )
             text_pos = np.round(text_pos).astype(int)
-            texts.append((f'{i_contour}', text_pos))
+            texts.append((f"{i_contour}", text_pos))
 
         # Draw all lines
         for contour, color in lines:
-            img_c = cv2.polylines(img_c,
-                                  [contour],
-                                  isClosed=False,
-                                  color=color,
-                                  thickness=19,
-                                  lineType=cv2.LINE_AA)
+            img_c = cv2.polylines(
+                img_c,
+                [contour],
+                isClosed=False,
+                color=color,
+                thickness=19,
+                lineType=cv2.LINE_AA,
+            )
 
         # Draw all points
         for contour, i, size, color in points:
@@ -135,7 +146,16 @@ class MaskVisualizer:
 
         # Draw all texts
         for text, pos in texts:
-            cv2.putText(img_c, text, pos, cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(
+                img_c,
+                text,
+                pos,
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
 
         return img_c
 
@@ -174,16 +194,18 @@ class MaskVisualizer:
 
                 points.append((contour, i, size, color))
 
-            texts.append((f'{i_lanemarking}', contour[len(contour) // 2, 0]))
+            texts.append((f"{i_lanemarking}", contour[len(contour) // 2, 0]))
 
         # Draw all lines
         for contour, color in lines:
-            img_c = cv2.polylines(img_c,
-                                  [contour],
-                                  isClosed=False,
-                                  color=color,
-                                  thickness=3,
-                                  lineType=cv2.LINE_AA)
+            img_c = cv2.polylines(
+                img_c,
+                [contour],
+                isClosed=False,
+                color=color,
+                thickness=3,
+                lineType=cv2.LINE_AA,
+            )
 
         # Draw all points
         for contour, i, size, color in points:
@@ -191,6 +213,15 @@ class MaskVisualizer:
 
         # Draw all texts
         for text, pos in texts:
-            cv2.putText(img_c, text, pos, cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(
+                img_c,
+                text,
+                pos,
+                cv2.FONT_HERSHEY_PLAIN,
+                1,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
 
         return img_c
