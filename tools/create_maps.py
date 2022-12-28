@@ -10,9 +10,8 @@ from loguru import logger
 from typing import Tuple, Dict, List
 
 from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
-from mapping import MapBuilder
+from deepaerialmapper.mapping import MapBuilder, SymbolDetector
 from mapping.map_builder import ContourExtractor
-from mapping.symbol import SymbolDetector
 
 
 def _load_configs_and_prepare(
