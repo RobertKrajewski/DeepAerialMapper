@@ -95,18 +95,10 @@ def create_maps(
     if not segmentation_files:
         raise ValueError("No segmentation masks given! Stopping!")
 
-    sym_patterns = [
-        "Left",
-        "Left_Right",
-        "Right",
-        "Straight",
-        "Straight_Left",
-        "Straight_Right",
-        "Unknown",
-    ]
-    cls_weight = "configs/symbol_weights.pt"
-    symbol_detector = SymbolDetector(sym_patterns, cls_weight)
-    contour_extractor = ContourExtractor()
+    symbol_detector_config = config.get("symbol_detector", {})
+    symbol_detector = SymbolDetector(**symbol_detector_config)
+    contour_extractor_config = config.get("contour_extractor", {})
+    contour_extractor = ContourExtractor(**contour_extractor_config)
     builder = MapBuilder(contour_extractor, symbol_detector, debug_dir=output_dir)
 
     for i_segmentation_file, segmentation_file in enumerate(

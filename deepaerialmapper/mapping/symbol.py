@@ -36,15 +36,15 @@ class Symbol:
 
 
 class SymbolDetector:
-    def __init__(self, pattern_type: List, cls_weight):
+    def __init__(self, symbols: List[str], weight_filepath: str) -> None:
 
-        self._patterns = pattern_type  # order of the list is important.
+        self._patterns = symbols  # order of the list is important.
         logger.info(f"Loaded patterns: {self._patterns}")
 
-        self._cls_model = Net(in_ch=1, out_ch=len(pattern_type))
+        self._cls_model = Net(in_ch=1, out_ch=len(symbols))
         self._cls_model.load_state_dict(
             torch.load(
-                cls_weight,
+                weight_filepath,
                 map_location=torch.device(
                     "cuda" if torch.cuda.is_available() else "cpu"
                 ),
