@@ -25,11 +25,11 @@ class Lanemarking:
         lanemarkings: List["Lanemarking"],
         other_lanemarkings: List["Lanemarking"],
         img_shape,
+        max_long_distance: float = 300,
+        max_lat_distance: float = 30,
         check_border=False,
     ) -> List["Lanemarking"]:
         """Try to extend dashed contours to image border and solid contours"""
-        max_long_distance = 300
-        max_lat_distance = 30
 
         if not len(lanemarkings) or not len(other_lanemarkings):
             return lanemarkings

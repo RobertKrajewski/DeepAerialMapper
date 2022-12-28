@@ -9,6 +9,60 @@ from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.masks import SemanticClass
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 from deepaerialmapper.mapping import Map, SymbolDetector, Symbol
+from deepaerialmapper.mapping.lanelet import derive_lanelets
+
+
+@dataclass
+class LanemarkingExtractor:
+    filter_min_length: int = 2
+    filter_max_length: int = 5
+    group_max_gap_size: float = 500
+    extend_check_border: bool = False
+    extend_max_long_distance: float = 300
+    extend_max_lat_distance: float = 30
+
+    def from_contours(
+        self,
+        road_borders: ContourManager,
+        lanemarking_contours: ContourManager,
+        img_shape,
+    ) -> List[Lanemarking]:
+        # Filter lanemarkings by length, only merge short ones
+        (
+            short_lanemarking_contours,
+            solid_lanemarking_contours,
+        ) = lanemarking_contours.filter_by_length(
+            max_length=self.filter_max_length, min_length=self.filter_min_length
+        )
+
+        # Create solid lanemarkings
+        solid_lanemarkings = [
+            Lanemarking([c], Lanemarking.LanemarkingType.SOLID)
+            for c in solid_lanemarking_contours
+        ]
+
+        # Created dashed lanemarkings
+        dashed_lanemarking, short_lanemarking = short_lanemarking_contours.group(
+            max_gap_size=self.group_max_gap_size
+        )
+
+        # Fill gaps between dashed and solid lanemarkings
+        dashed_lanemarking = Lanemarking.extend_to(
+            dashed_lanemarking,
+            solid_lanemarkings,
+            img_shape,
+            check_border=self.extend_check_border,
+            max_long_distance=self.extend_max_long_distance,
+            max_lat_distance=self.extend_max_lat_distance,
+        )
+
+        road_borders = [
+            Lanemarking([c], Lanemarking.LanemarkingType.ROAD_BORDER)
+            for c in road_borders
+        ]
+
+        lanemarkings = [*road_borders, *solid_lanemarkings, *dashed_lanemarking]
+        return lanemarkings
 
 
 @dataclass
@@ -66,52 +120,19 @@ class MapBuilder:
     def __init__(
         self,
         contour_extractor: ContourExtractor,
+        lanemarking_extractor: LanemarkingExtractor,
         symbol_detector: SymbolDetector,
         skip_lanelets=True,
         skip_symbols=False,
         debug_dir=None,
     ):
         self._contour_extractor = contour_extractor
+        self._lanemarking_extractor = lanemarking_extractor
         self._symbol_detector = symbol_detector
 
         self._skip_lanelets = skip_lanelets
         self._skip_symbols = skip_symbols
         self._debug_dir = debug_dir
-
-    @staticmethod
-    def derive_lanemarkings(
-        road_borders: ContourManager, lanemarking_contours: ContourManager, img_shape
-    ) -> List[Lanemarking]:
-        # Filter lanemarkings by length, only merge short ones
-        (
-            short_lanemarking_contours,
-            solid_lanemarking_contours,
-        ) = lanemarking_contours.filter_by_length(max_length=5, min_length=2)
-        # short_lanemarking_contours.show()
-
-        # Create solid lanemarkings
-        solid_lanemarkings = [
-            Lanemarking([c], Lanemarking.LanemarkingType.SOLID)
-            for c in solid_lanemarking_contours
-        ]
-
-        # Created dashed lanemarkings
-        dashed_lanemarking, short_lanemarking = short_lanemarking_contours.group(
-            debug=False
-        )
-
-        # Fill gaps between dashed and solid lanemarkings
-        dashed_lanemarking = Lanemarking.extend_to(
-            dashed_lanemarking, solid_lanemarkings, img_shape
-        )
-
-        road_borders = [
-            Lanemarking([c], Lanemarking.LanemarkingType.ROAD_BORDER)
-            for c in road_borders
-        ]
-
-        lanemarkings = [*road_borders, *solid_lanemarkings, *dashed_lanemarking]
-        return lanemarkings
 
     def from_semantic_mask(
         self,
@@ -122,7 +143,6 @@ class MapBuilder:
         px2m,
         debug_prefix="",
     ) -> "Map":
-
         (
             lanemarking_contours,
             lanemarking_mask,
@@ -133,7 +153,6 @@ class MapBuilder:
             lanemarking_mask,
             lanemarking_contours.merge(road_contours),
             background=seg_mask.mask,
-            show=False,
             random=True,
         )
 
@@ -143,7 +162,7 @@ class MapBuilder:
                 cv2.cvtColor(img_overlay, cv2.COLOR_RGB2BGR),
             )
 
-        lanemarkings = self.derive_lanemarkings(
+        lanemarkings = self._lanemarking_extractor.from_contours(
             road_contours, lanemarking_contours, lanemarking_mask.shape
         )
 
@@ -160,15 +179,13 @@ class MapBuilder:
                 cv2.cvtColor(img_overlay, cv2.COLOR_RGB2BGR),
             )
 
-        # Derive lanelets
         if self._skip_lanelets:
             lanelets = set()
-            logger.warning(f"Skipping lanelet matching")
+            logger.warning(f"Skipping lanelet matching!")
         else:
-            lanelets = self.derive_lanelets(img_ref, seg_mask, lanemarkings, px2m)
+            lanelets = derive_lanelets(img_ref, seg_mask, lanemarkings, px2m)
             logger.info(f"Found {len(lanelets)} lanelets")
 
-        # Find all symbols
         if self._skip_symbols:
             symbols: List[Symbol] = []
             logger.warning(f"Skipping symbol detection!")

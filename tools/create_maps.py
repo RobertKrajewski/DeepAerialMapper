@@ -10,8 +10,12 @@ from loguru import logger
 from typing import Tuple, Dict, List
 
 from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
-from deepaerialmapper.mapping import MapBuilder, SymbolDetector
-from mapping.map_builder import ContourExtractor
+from deepaerialmapper.mapping import (
+    MapBuilder,
+    ContourExtractor,
+    LanemarkingExtractor,
+    SymbolDetector,
+)
 
 
 def _load_configs_and_prepare(
@@ -95,11 +99,15 @@ def create_maps(
     if not segmentation_files:
         raise ValueError("No segmentation masks given! Stopping!")
 
-    symbol_detector_config = config.get("symbol_detector", {})
-    symbol_detector = SymbolDetector(**symbol_detector_config)
     contour_extractor_config = config.get("contour_extractor", {})
     contour_extractor = ContourExtractor(**contour_extractor_config)
-    builder = MapBuilder(contour_extractor, symbol_detector, debug_dir=output_dir)
+    lanemarking_extractor_config = config.get("lanemarking_extractor", {})
+    lanemarking_extractor = LanemarkingExtractor(**lanemarking_extractor_config)
+    symbol_detector_config = config.get("symbol_detector", {})
+    symbol_detector = SymbolDetector(**symbol_detector_config)
+    builder = MapBuilder(
+        contour_extractor, lanemarking_extractor, symbol_detector, debug_dir=output_dir
+    )
 
     for i_segmentation_file, segmentation_file in enumerate(
         segmentation_files, start=start_map

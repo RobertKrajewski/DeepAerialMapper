@@ -262,7 +262,7 @@ class ContourManager:
 
         return ContourManager(new_contours)
 
-    def group_at_split_points(self, split_ptrs, debug=True):
+    def group_at_split_points(self, split_ptrs):
         # Two end points are the most farest points in thin lane marking.
         end_A = [
             i[0].squeeze() for i in self.contours
@@ -645,7 +645,7 @@ class ContourManager:
 
     def group(
         self,
-        max_gap_size: int = 500,
+        max_gap_size: float = 500.0,
         debug: bool = False,
         distance_mode="centers_oriented",
     ) -> Tuple["ContourManager", "ContourManager"]:
