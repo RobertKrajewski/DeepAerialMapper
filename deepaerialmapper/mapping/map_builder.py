@@ -14,12 +14,17 @@ from deepaerialmapper.mapping import Map, SymbolDetector, Symbol
 @dataclass
 class ContourExtractor:
     subsample_factor: int = 30
+    road_border_blur_size: int = 15
+    road_border_border_size: int = 8
+    lanemarking_blur_size: int = 3
+    lanemarking_border_size: int = 1
+    lanemarking_erode_size: int = 35
 
     def from_mask(self, seg_mask, ignore_regions):
         # Find road borders
         road_mask = seg_mask.class_mask(
             [SemanticClass.ROAD, SemanticClass.SYMBOL, SemanticClass.LANEMARKING]
-        ).blur_and_close(15)
+        ).blur_and_close(self.road_border_blur_size, self.road_border_border_size)
 
         road_contours = (
             ContourManager.from_mask(road_mask)
@@ -34,15 +39,14 @@ class ContourExtractor:
         road_trafficisland_mask = road_mask.union(
             seg_mask.class_mask(SemanticClass.TRAFFICISLAND)
         )
+        road_trafficisland_mask = road_trafficisland_mask.blur_and_close(
+            self.lanemarking_blur_size, self.lanemarking_border_size
+        ).erode(self.lanemarking_erode_size)
         lanemarking_mask = (
-            lanemarking_mask.intersection(
-                road_trafficisland_mask.blur_and_close(3, border_effect=1).erode(35)
-            )
-            .erode(3)
-            .dilate(3)
-        ).remove(
-            ignore_regions
-        )  # Extra erode and dilate to handle pointy lanemarkings after intersection
+            lanemarking_mask.intersection(road_trafficisland_mask)
+            # Extra erode and dilate to handle pointy lanemarkings after intersection
+            .erode(3).dilate(3)
+        ).remove(ignore_regions)
 
         # As lanemarkings are THICK, thin them to get a line only
         lanemarking_mask = lanemarking_mask.thin()
