@@ -259,6 +259,9 @@ class ClassMask:
         Returns:
 
         """
+        if not ignore_regions:
+            return ClassMask(np.copy(self.mask), self.class_names)
+
         new_mask = np.copy(self.mask).astype(np.int32)
 
         logger.debug(f"Removing {len(ignore_regions)} regions")
