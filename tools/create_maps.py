@@ -8,8 +8,8 @@ import typer
 import yaml
 from loguru import logger
 
-from deepaerialmapper.mapping import Map
 from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
+from mapping import MapBuilder
 
 
 def create_maps(
@@ -17,6 +17,12 @@ def create_maps(
     output_dir: str = "results/maps/<now>",
     start_map: int = 0,
 ) -> None:
+    """Based on semantic segmentation of satellite images, derive lanemarkings and symbols in lanelet2 format.
+
+    :param input_dir: Directory containing semantic segmentation masks as png files as well as extra information.
+    :param output_dir: Directory to save results to.
+    :param start_map: Skip the first n maps.
+    """
     input_dir = Path(input_dir)
     # Prepare result directory
     if "<now>" in output_dir:
@@ -77,6 +83,7 @@ def create_maps(
     if not segmentation_files:
         raise ValueError("No segmentation masks given! Stopping!")
 
+    builder = MapBuilder()
     for i_segmentation_file, segmentation_file in enumerate(
         segmentation_files, start=start_map
     ):
@@ -104,7 +111,7 @@ def create_maps(
             ignore_regions = ignore[filename]["regions"]
         logger.info(f"Found {len(ignore_regions)} ignore regions!")
 
-        lanelet_map = Map.from_semantic_mask(
+        lanelet_map = builder.from_semantic_mask(
             seg_mask,
             ignore_regions,
             proj,
