@@ -62,7 +62,7 @@ def test_symbol_detector(image_path, *ori_path):
     # for symbol in detector.patterns:
     # symbol.show()
 
-    symbols = detector.detect_patterns(
+    symbols = detector.detect(
         seg_mask, cls_weight, debug=False, dbg_rescale=0.75
     )  # Scale too 100px size if debug=True
 

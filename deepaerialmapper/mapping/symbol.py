@@ -6,9 +6,10 @@ from typing import List, Optional
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from loguru import logger
 
-from deepaerialmapper.classification.symbol import classify
+from deepaerialmapper.classification.symbol import predict, Net
 from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
 
 
@@ -35,10 +36,20 @@ class Symbol:
 
 
 class SymbolDetector:
-    def __init__(self, pattern_type: List):
+    def __init__(self, pattern_type: List, cls_weight):
 
-        self.patterns = pattern_type  # order of the list is important.
-        logger.info(f"Loaded patterns: {self.patterns}")
+        self._patterns = pattern_type  # order of the list is important.
+        logger.info(f"Loaded patterns: {self._patterns}")
+
+        self._cls_model = Net(in_ch=1, out_ch=len(pattern_type))
+        self._cls_model.load_state_dict(
+            torch.load(
+                cls_weight,
+                map_location=torch.device(
+                    "cuda" if torch.cuda.is_available() else "cpu"
+                ),
+            )
+        )
 
     def _load_symbols(self):
         """Load symbols from disk"""
@@ -104,10 +115,9 @@ class SymbolDetector:
 
         return ref_points
 
-    def detect_patterns(
+    def detect(
         self,
         seg_mask: SegmentationMask,
-        cls_weight,
         min_area: int = 1000,
         max_area: int = 6000,
         debug: bool = False,
@@ -151,9 +161,19 @@ class SymbolDetector:
             ref_point = self.extract_ref(approx)
 
             # svm doesn't need to go through all patterns.
-            best_name = classify(cnt, seg_mask, self.patterns, cls_weight)
+            best_name = self.classify(cnt, seg_mask)
             detections.append(
                 Symbol(name=best_name, contour=approx, ref=ref_point, box=box)
             )
 
         return detections
+
+    def classify(self, symbol_cnt: List[np.ndarray], mask, scale=255):
+        tx, ty, hori, verti = cv2.boundingRect(symbol_cnt)
+        roi = ty, ty + verti, tx, tx + hori
+        symbol_mask = mask.class_mask(SemanticClass.SYMBOL)
+        cropped_mask = symbol_mask[roi[0] : roi[1], roi[2] : roi[3]]
+
+        return predict(
+            self._cls_model, cropped_mask.astype(np.uint8) * scale, self._patterns
+        )

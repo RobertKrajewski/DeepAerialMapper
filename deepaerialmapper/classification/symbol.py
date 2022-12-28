@@ -20,23 +20,6 @@ from deepaerialmapper.classification.symbol_builder import SymbolDataset, set_fi
 from deepaerialmapper.mapping.masks import SemanticClass
 
 
-def classify(symbol_cnt: List[np.ndarray], mask, cls_order, cls_weight, scale=255):
-    cls_model = Net(in_ch=1, out_ch=len(cls_order))
-    cls_model.load_state_dict(
-        torch.load(
-            cls_weight,
-            map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        )
-    )
-
-    tx, ty, hori, verti = cv2.boundingRect(symbol_cnt)
-    roi = ty, ty + verti, tx, tx + hori
-    symbol_mask = mask.class_mask(SemanticClass.SYMBOL)
-    cropped_mask = symbol_mask[roi[0] : roi[1], roi[2] : roi[3]]
-
-    return predict(cls_model, cropped_mask.astype(np.uint8) * scale, cls_order)
-
-
 class Net(nn.Module):
     def __init__(self, in_ch, out_ch):
         super(Net, self).__init__()
