@@ -1,12 +1,17 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 
 import cv2
 from loguru import logger
 
 from deepaerialmapper.mapping.contour import ContourManager
 from deepaerialmapper.mapping.lanemarking import Lanemarking
-from deepaerialmapper.mapping.masks import SemanticClass
+from deepaerialmapper.mapping.masks import (
+    SemanticClass,
+    ClassMask,
+    IgnoreRegion,
+    SegmentationMask,
+)
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 from deepaerialmapper.mapping import Map, SymbolDetector, Symbol
 from deepaerialmapper.mapping.lanelet import derive_lanelets
@@ -25,8 +30,18 @@ class LanemarkingExtractor:
         self,
         road_borders: ContourManager,
         lanemarking_contours: ContourManager,
-        img_shape,
+        img_shape: Tuple[int],
     ) -> List[Lanemarking]:
+        """Create lanemarkings from road borders and lanemarking contours.
+
+        Classify lanemarking contours by length into solid and dash lanemarking contours. Contours of dashed
+        lanemarkings are grouped so that a single lanemarking includes all contours.
+
+        :param road_borders: Road border contours
+        :param lanemarking_contours: Lanemarking contours
+        :param img_shape: Size of the satellite image used (h,w).
+        :return: Extracted lanemarkings
+        """
         # Filter lanemarkings by length, only merge short ones
         (
             short_lanemarking_contours,
@@ -74,7 +89,20 @@ class ContourExtractor:
     lanemarking_border_size: int = 1
     lanemarking_erode_size: int = 35
 
-    def from_mask(self, seg_mask, ignore_regions):
+    def from_mask(
+        self, seg_mask: SegmentationMask, ignore_regions: List[IgnoreRegion]
+    ) -> Tuple[ContourManager, ClassMask, ContourManager]:
+        """Extract contours of road borders and lanemarkings from a given semantic segmentation mask.
+
+        Allows to manually remove mask regions from lanemarking contour extraction through ignore regions.
+
+        :param seg_mask: Semantic segmentation of road section
+        :param ignore_regions: List of regions ignored for lanemarking extraction
+        :return: Tuple consisting of:
+                 * Lanemarking contours
+                 * Post-processed lanemarking segmentation mask
+                 * Road border contours
+        """
         # Find road borders
         road_mask = seg_mask.class_mask(
             [SemanticClass.ROAD, SemanticClass.SYMBOL, SemanticClass.LANEMARKING]
@@ -126,6 +154,11 @@ class MapBuilder:
         skip_symbols=False,
         debug_dir=None,
     ):
+        """
+        :param skip_lanelets: If true, lanelet association is deactivated.
+        :param skip_symbols: If true, symbol detection is deactivated.
+        :param debug_dir: If set, debug images are created during map creation process.
+        """
         self._contour_extractor = contour_extractor
         self._lanemarking_extractor = lanemarking_extractor
         self._symbol_detector = symbol_detector
@@ -136,13 +169,31 @@ class MapBuilder:
 
     def from_semantic_mask(
         self,
-        seg_mask,
-        ignore_regions: List,
-        proj,
-        origin,
-        px2m,
-        debug_prefix="",
+        seg_mask: SegmentationMask,
+        ignore_regions: List[IgnoreRegion],
+        proj: str,
+        origin: Tuple[float, float],
+        px2m: float,
+        debug_prefix: str = "",
     ) -> "Map":
+        """Creates a map from a semantic segmentation mask in a four-step process.
+
+        Process steps:
+        1) Extract contours from semantic segmentation mask
+        2) Process contours to lanemarkings
+        3) Group lanemarkings to lanelets
+        4) Detect road symbols
+
+        Creates debug images if `debug_dir` is set.
+
+        :param seg_mask: Semantic segmentation of road section
+        :param ignore_regions: List of regions ignored for lanemarking extraction
+        :param proj: epsg code of the projection used, e.g. "epsg:25832"
+        :param origin: Utm coordinates of the top left corner of the used satellite image.
+        :param px2m: Conversion factor from pixel in satellite image to meters.
+        :param debug_prefix: Prefix added to debug images.
+        :return: Created map containing lanemarkings, lanelets and symbols.
+        """
         (
             lanemarking_contours,
             lanemarking_mask,

@@ -9,7 +9,7 @@ import yaml
 from loguru import logger
 from typing import Tuple, Dict, List
 
-from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
+from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass, IgnoreRegion
 from deepaerialmapper.mapping import (
     MapBuilder,
     ContourExtractor,
@@ -131,7 +131,7 @@ def create_maps(
             proj = "epsg:25832"
 
         # Get matching ignore regions
-        ignore_regions = []
+        ignore_regions: List[IgnoreRegion] = []
         if filename in ignore:
             ignore_regions = ignore[filename]["regions"]
         logger.info(f"Found {len(ignore_regions)} ignore regions!")

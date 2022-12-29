@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Any
 
 import cv2
 import numpy as np
@@ -11,6 +11,8 @@ from loguru import logger
 from scipy import linalg
 
 from deepaerialmapper.mapping.lanemarking import Lanemarking
+
+IgnoreRegion = Dict[str, Any]
 
 
 class SemanticClass(Enum):
@@ -250,7 +252,7 @@ class ClassMask:
 
         return ClassMask(mask, self.class_names)
 
-    def remove(self, ignore_regions: List) -> "ClassMask":
+    def remove(self, ignore_regions: List[IgnoreRegion]) -> "ClassMask":
         """
 
         Args:

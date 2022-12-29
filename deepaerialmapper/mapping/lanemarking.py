@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -24,7 +24,7 @@ class Lanemarking:
         cls,
         lanemarkings: List["Lanemarking"],
         other_lanemarkings: List["Lanemarking"],
-        img_shape,
+        img_shape: Tuple[int],
         max_long_distance: float = 300,
         max_lat_distance: float = 30,
         check_border=False,
