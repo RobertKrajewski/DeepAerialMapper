@@ -19,7 +19,7 @@ from deepaerialmapper.eval.mapping import (
     evaluate_dataset,
 )
 from deepaerialmapper.mapping.masks import (
-    SegmentationMask,
+    SemanticMask,
     SemanticClass,
     ClassMask,
 )
@@ -43,7 +43,7 @@ def test_symbol_detector(image_path, *ori_path):
     # Load synthetic image with symbols on it
     # image_path = "data/synth/synthetic3.png"
     # image_path = "data\synth\synthetic3.png"
-    seg_mask = SegmentationMask.from_file(image_path, palette_map)
+    seg_mask = SemanticMask.from_file(image_path, palette_map)
 
     # Load symbol detector with arrow patterns
     cls_order = [
@@ -158,7 +158,7 @@ def test_create_training_samples_symbols():
     filepath = (
         r"C:\Users\samsung_\thesis\hdmap_segmentation\data\hdmap\ann_palette\1.png"
     )
-    segmask = SegmentationMask.from_file(filepath, palette_map)
+    segmask = SemanticMask.from_file(filepath, palette_map)
     symbol_mask = segmask.class_mask(SemanticClass.SYMBOL)
 
     num_groups, group_mask, bboxes, centers = cv2.connectedComponentsWithStats(

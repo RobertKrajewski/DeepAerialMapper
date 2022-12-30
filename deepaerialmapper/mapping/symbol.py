@@ -10,7 +10,7 @@ import torch
 from loguru import logger
 
 from deepaerialmapper.classification.symbol import predict, Net
-from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass
+from deepaerialmapper.mapping.masks import SemanticMask, SemanticClass
 
 
 @dataclass
@@ -117,7 +117,7 @@ class SymbolDetector:
 
     def detect(
         self,
-        seg_mask: SegmentationMask,
+        seg_mask: SemanticMask,
         min_area: int = 1000,
         max_area: int = 6000,
         debug: bool = False,

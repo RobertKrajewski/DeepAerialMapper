@@ -39,7 +39,7 @@ class SemanticClass(Enum):
 
 
 @dataclass
-class SegmentationMask:
+class SemanticMask:
     """Multi-Class segmentation mask
 
     The segmentation mask is represented by an RGB image. Each class is by a unique color as described by the palette.
@@ -77,7 +77,7 @@ class SegmentationMask:
         return ClassMask(output_mask, class_names)
 
     @classmethod
-    def from_file(cls, filepath: Path, palette: Palette) -> "SegmentationMask":
+    def from_file(cls, filepath: Path, palette: Palette) -> "SemanticMask":
         """Load semantic segmentation mask from RGB image.
 
         :param filepath: Path of image file to load.

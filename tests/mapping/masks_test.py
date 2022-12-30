@@ -1,6 +1,6 @@
 import numpy as np
 
-from mapping import SemanticClass, SegmentationMask
+from mapping import SemanticClass, SemanticMask
 
 
 def test_segmentation_mask_class_mask() -> None:
@@ -10,7 +10,7 @@ def test_segmentation_mask_class_mask() -> None:
         SemanticClass.ROAD: (2, 2, 2),
     }
     mask = np.array([0, 1, 2], dtype=np.uint8).reshape((1, -1, 1)).repeat(3, axis=-1)
-    mask = SegmentationMask(mask, palette)
+    mask = SemanticMask(mask, palette)
     np.testing.assert_equal(
         mask.class_mask(SemanticClass.BLACK).mask, [[True, False, False]]
     )

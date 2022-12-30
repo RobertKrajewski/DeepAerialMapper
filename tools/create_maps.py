@@ -9,7 +9,7 @@ import yaml
 from loguru import logger
 from typing import Tuple, Dict, List
 
-from deepaerialmapper.mapping.masks import SegmentationMask, SemanticClass, IgnoreRegion
+from deepaerialmapper.mapping.masks import SemanticMask, SemanticClass, IgnoreRegion
 from deepaerialmapper.mapping import (
     MapBuilder,
     ContourExtractor,
@@ -115,7 +115,7 @@ def create_maps(
         logger.info(
             f"Processing segmentation {i_segmentation_file}/{len(segmentation_files)}: {segmentation_file}"
         )
-        seg_mask = SegmentationMask.from_file(segmentation_file, palette_map)
+        seg_mask = SemanticMask.from_file(segmentation_file, palette_map)
         filename = segmentation_file.stem
 
         # Get matching meta

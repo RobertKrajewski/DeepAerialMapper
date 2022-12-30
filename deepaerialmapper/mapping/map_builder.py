@@ -10,7 +10,7 @@ from deepaerialmapper.mapping.masks import (
     SemanticClass,
     ClassMask,
     IgnoreRegion,
-    SegmentationMask,
+    SemanticMask,
 )
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 from deepaerialmapper.mapping.symbol import SymbolDetector, Symbol
@@ -91,7 +91,7 @@ class ContourExtractor:
     lanemarking_erode_size: int = 35
 
     def from_mask(
-        self, seg_mask: SegmentationMask, ignore_regions: List[IgnoreRegion]
+        self, seg_mask: SemanticMask, ignore_regions: List[IgnoreRegion]
     ) -> Tuple[ContourManager, ClassMask, ContourManager]:
         """Extract contours of road borders and lanemarkings from a given semantic segmentation mask.
 
@@ -170,7 +170,7 @@ class MapBuilder:
 
     def from_semantic_mask(
         self,
-        seg_mask: SegmentationMask,
+        seg_mask: SemanticMask,
         ignore_regions: List[IgnoreRegion],
         proj: str,
         origin: Tuple[float, float],
