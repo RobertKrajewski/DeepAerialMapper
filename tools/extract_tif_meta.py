@@ -11,7 +11,7 @@ def extract_tif_meta(image_dir: str) -> None:
     """Extracts meta information from tif satellite images for map creation.
 
     Extracts from every ".tif" image in given directory information including location, scale and projection used and
-    stores results in a "meta.json" file the in images dir.
+    stores results in a "meta.yaml" file the in images dir.
     :param image_dir: Directory containing tif (not tiff!) images.
     """
     meta = {}
