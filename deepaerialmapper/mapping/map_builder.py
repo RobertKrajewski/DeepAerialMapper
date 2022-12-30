@@ -6,12 +6,11 @@ from loguru import logger
 
 from deepaerialmapper.mapping.contour import ContourManager
 from deepaerialmapper.mapping.lanemarking import Lanemarking
-from deepaerialmapper.mapping.masks import (
+from deepaerialmapper.mapping.semantic_mask import (
     SemanticClass,
-    BinaryMask,
-    IgnoreRegion,
     SemanticMask,
 )
+from deepaerialmapper.mapping.binary_mask import BinaryMask, IgnoreRegion
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 from deepaerialmapper.mapping.symbol import SymbolDetector, Symbol
 from deepaerialmapper.mapping.lanelet import derive_lanelets

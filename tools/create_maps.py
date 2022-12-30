@@ -9,7 +9,7 @@ import yaml
 from loguru import logger
 from typing import Tuple, Dict, List
 
-from deepaerialmapper.mapping.masks import SemanticMask, SemanticClass, IgnoreRegion
+from deepaerialmapper.mapping import SemanticMask, SemanticClass, IgnoreRegion
 from deepaerialmapper.mapping import (
     MapBuilder,
     ContourExtractor,
