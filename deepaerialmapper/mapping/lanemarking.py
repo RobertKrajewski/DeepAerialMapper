@@ -24,37 +24,36 @@ class Lanemarking:
         cls,
         lanemarkings: List["Lanemarking"],
         other_lanemarkings: List["Lanemarking"],
-        img_shape: Tuple[int],
+        img_shape: Tuple[int, int],
         max_long_distance: float = 300,
         max_lat_distance: float = 30,
         check_border=False,
     ) -> List["Lanemarking"]:
-        """Try to extend dashed contours to image border and solid contours"""
+        """Try to extend dashed contours to image border and solid contours
+        :param lanemarkings:
+        :param other_lanemarkings:
+        :param img_shape:
+        :param max_long_distance:
+        :param max_lat_distance:
+        :param check_border:
+        :return:
+        """
 
         if not len(lanemarkings) or not len(other_lanemarkings):
             return lanemarkings
 
-        all_solid_points = np.concatenate([o.contour for o in other_lanemarkings])
+        other_lanemarkings_points = np.concatenate(
+            [o.contour for o in other_lanemarkings]
+        )
 
         from deepaerialmapper.mapping.contour import ContourSegment
 
         for lanemarking in lanemarkings:
             # Check end
             e = ContourSegment.from_coordinates(lanemarking.elements[-1])
-
-            min_dist = 10000
-            min_dist_point = None
-
-            for i_p, p in enumerate(all_solid_points):
-                long, lat = e.oriented_distance_point(p)
-
-                if (
-                    0 < long < max_long_distance
-                    and abs(lat) < max_lat_distance
-                    and long < min_dist
-                ):
-                    min_dist = long
-                    min_dist_point = p
+            min_dist_point = e.closest_point(
+                other_lanemarkings_points, max_long_distance, max_lat_distance
+            )
 
             if min_dist_point is not None:
                 lanemarking.elements.append(min_dist_point[np.newaxis, :, :])
@@ -66,19 +65,9 @@ class Lanemarking:
 
             # Check start
             s = ContourSegment.from_coordinates(lanemarking.elements[0][::-1])
-            min_dist = 10000
-            min_dist_point = None
-
-            for i_p, p in enumerate(all_solid_points):
-                long, lat = s.oriented_distance_point(p)
-
-                if (
-                    0 < long < max_long_distance
-                    and abs(lat) < max_lat_distance
-                    and long < min_dist
-                ):
-                    min_dist = long
-                    min_dist_point = p
+            min_dist_point = s.closest_point(
+                other_lanemarkings_points, max_long_distance, max_lat_distance
+            )
 
             if min_dist_point is not None:
                 lanemarking.elements.insert(0, min_dist_point[np.newaxis, :, :])
@@ -89,24 +78,3 @@ class Lanemarking:
                     lanemarking.elements.insert(0, new_point[np.newaxis, np.newaxis, :])
 
         return lanemarkings
-
-
-def test_extend():
-    dashed = [
-        Lanemarking(
-            [np.array([[0, 0], [1, 0]]).reshape([2, 1, 2])],
-            Lanemarking.LanemarkingType.DASHED,
-        )
-    ]
-    solid = [
-        Lanemarking(
-            [np.array([[10, 0], [11, 0]]).reshape([2, 1, 2])],
-            Lanemarking.LanemarkingType.SOLID,
-        ),
-        Lanemarking(
-            [np.array([[-10, 0], [-9, 0]]).reshape([2, 1, 2])],
-            Lanemarking.LanemarkingType.SOLID,
-        ),
-    ]
-
-    Lanemarking.extend_to(dashed, solid)

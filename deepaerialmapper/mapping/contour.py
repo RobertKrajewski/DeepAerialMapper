@@ -10,8 +10,8 @@ import numpy as np
 import scipy
 from loguru import logger
 
-from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.binary_mask import BinaryMask
+from deepaerialmapper.mapping.lanemarking import Lanemarking
 
 
 @dataclass
@@ -65,6 +65,34 @@ class ContourSegment:
         return np.abs(
             (a * x - b * y + c) / (np.sqrt(a**2 + b**2))
         )  # Project point on orthogonal slope
+
+    def closest_point(
+        self,
+        points: List[np.ndarray],
+        max_long_distance: float,
+        max_lat_distance: float,
+    ) -> np.ndarray:
+        """
+
+        :param points:
+        :param max_long_distance:
+        :param max_lat_distance:
+        :return:
+        """
+        min_dist = math.inf
+        min_dist_point = None
+
+        for point in points:
+            long, lat = self.oriented_distance_point(point)
+
+            if (
+                0 < long < max_long_distance
+                and abs(lat) < max_lat_distance
+                and long < min_dist
+            ):
+                min_dist = long
+                min_dist_point = point
+        return min_dist_point
 
     def distance_center_to_point(self, point: np.ndarray) -> float:
         return np.abs(np.linalg.norm(self.center - point))
