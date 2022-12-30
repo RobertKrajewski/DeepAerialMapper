@@ -218,7 +218,8 @@ class MapBuilder:
         )
 
         if self._debug_dir:
-            _, img_overlay = lanemarking_mask.show(
+            _, img_overlay = MaskVisualizer().show(
+                lanemarking_mask,
                 lanemarkings=lanemarkings,
                 background=seg_mask.mask,
                 show=False,
