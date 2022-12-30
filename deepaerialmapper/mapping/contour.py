@@ -3,7 +3,7 @@ import math
 import pprint
 import random
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import cv2
 import numpy as np
@@ -11,7 +11,7 @@ import scipy
 from loguru import logger
 
 from deepaerialmapper.mapping.lanemarking import Lanemarking
-from deepaerialmapper.mapping.masks import BinaryMask
+from deepaerialmapper.mapping.binary_mask import BinaryMask
 
 
 @dataclass

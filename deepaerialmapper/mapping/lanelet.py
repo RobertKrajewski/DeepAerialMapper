@@ -6,7 +6,7 @@ import numpy as np
 from loguru import logger
 
 from deepaerialmapper.mapping.contour import ContourSegment
-from deepaerialmapper.mapping.masks import SemanticClass
+from deepaerialmapper.mapping.semantic_mask import SemanticClass
 
 
 def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set[FrozenSet[int]]:

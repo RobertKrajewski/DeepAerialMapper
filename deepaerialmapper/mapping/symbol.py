@@ -10,7 +10,7 @@ import torch
 from loguru import logger
 
 from deepaerialmapper.classification.symbol import predict, Net
-from deepaerialmapper.mapping.masks import SemanticMask, SemanticClass
+from deepaerialmapper.mapping.semantic_mask import SemanticMask, SemanticClass
 
 
 @dataclass
