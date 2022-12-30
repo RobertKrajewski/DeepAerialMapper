@@ -4,17 +4,14 @@ from typing import List, Tuple
 import cv2
 from loguru import logger
 
-from deepaerialmapper.mapping.contour import ContourManager
-from deepaerialmapper.mapping.lanemarking import Lanemarking
-from deepaerialmapper.mapping.semantic_mask import (
-    SemanticClass,
-    SemanticMask,
-)
 from deepaerialmapper.mapping.binary_mask import BinaryMask, IgnoreRegion
-from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
-from deepaerialmapper.mapping.symbol import SymbolDetector, Symbol
+from deepaerialmapper.mapping.contour import ContourManager
 from deepaerialmapper.mapping.lanelet import derive_lanelets
+from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.map import Map
+from deepaerialmapper.mapping.semantic_mask import SemanticClass, SemanticMask
+from deepaerialmapper.mapping.symbol import Symbol, SymbolDetector
+from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
 
 
 @dataclass

@@ -16,7 +16,8 @@ from loguru import logger
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
-from deepaerialmapper.classification.symbol_builder import SymbolDataset, set_files
+from deepaerialmapper.classification.symbol_builder import (SymbolDataset,
+                                                            set_files)
 
 
 class Net(nn.Module):

@@ -1,9 +1,9 @@
-from typing import Dict, List, Union, Any
+from typing import Any, Dict, List, Union
 
 import numpy as np
 from loguru import logger
-from scipy.optimize import linear_sum_assignment
 from nptyping import NDArray, Shape
+from scipy.optimize import linear_sum_assignment
 
 Polyline = NDArray[Shape["Any, 2"], Any]  # 2D polyline
 

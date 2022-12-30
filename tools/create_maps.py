@@ -3,19 +3,16 @@ import pprint
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 import typer
 import yaml
 from loguru import logger
-from typing import Tuple, Dict, List
 
-from deepaerialmapper.mapping import SemanticMask, SemanticClass, IgnoreRegion
-from deepaerialmapper.mapping import (
-    MapBuilder,
-    ContourExtractor,
-    LanemarkingExtractor,
-    SymbolDetector,
-)
+from deepaerialmapper.mapping import (ContourExtractor, IgnoreRegion,
+                                      LanemarkingExtractor, MapBuilder,
+                                      SemanticClass, SemanticMask,
+                                      SymbolDetector)
 
 
 def _load_configs_and_prepare(

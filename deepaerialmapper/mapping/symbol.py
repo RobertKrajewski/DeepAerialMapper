@@ -9,8 +9,8 @@ import numpy as np
 import torch
 from loguru import logger
 
-from deepaerialmapper.classification.symbol import predict, Net
-from deepaerialmapper.mapping.semantic_mask import SemanticMask, SemanticClass
+from deepaerialmapper.classification.symbol import Net, predict
+from deepaerialmapper.mapping.semantic_mask import SemanticClass, SemanticMask
 
 
 @dataclass

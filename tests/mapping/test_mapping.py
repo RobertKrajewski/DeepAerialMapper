@@ -1,30 +1,22 @@
-import cv2
-import numpy as np
-from matplotlib import pyplot as plt
-
 import sys
-
 from typing import List, Tuple
 
+import cv2
+import numpy as np
 import tqdm
 import yaml
+from matplotlib import pyplot as plt
 
+from deepaerialmapper.eval.mapping import (evaluate_dataset, evaluate_map,
+                                           resample_polygon)
+from deepaerialmapper.mapping.contour import (ContourManager, ContourSegment,
+                                              compute_pca)
+from deepaerialmapper.mapping.masks import (BinaryMask, SemanticClass,
+                                            SemanticMask)
+from deepaerialmapper.mapping.symbol import SymbolDetector
 from tests.test_corner_split import find_split_points
 
 sys.path.insert(0, r".")
-from deepaerialmapper.mapping.contour import ContourSegment, ContourManager
-from deepaerialmapper.eval.mapping import (
-    resample_polygon,
-    evaluate_map,
-    evaluate_dataset,
-)
-from deepaerialmapper.mapping.masks import (
-    SemanticMask,
-    SemanticClass,
-    BinaryMask,
-)
-from deepaerialmapper.mapping.symbol import SymbolDetector
-from deepaerialmapper.mapping.contour import compute_pca
 
 
 def test_compute_pca():

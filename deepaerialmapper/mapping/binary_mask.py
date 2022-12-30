@@ -2,7 +2,7 @@ import itertools
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
+from typing import Any, Dict, List, Tuple
 
 import cv2
 import numpy as np
@@ -252,6 +252,7 @@ class BinaryMask:
                 drawing[y, x] = (255, 0, 0)
 
             import matplotlib.pyplot as plt
+
             plt.imshow(drawing)
             plt.show()
 

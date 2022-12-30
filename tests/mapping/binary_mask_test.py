@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-
 import pytest
 
 from deepaerialmapper.mapping import BinaryMask, SemanticClass
@@ -191,9 +190,12 @@ def test_find_split_points():
             [0, 1, 1, 0, 0],
             [0, 0, 0, 1, 0],
             [0, 0, 0, 0, 1],
-        ], dtype=bool
+        ],
+        dtype=bool,
     )
-    _, split_points = BinaryMask(contour_mask, [SemanticClass.ROAD]).remove_split_points()
+    _, split_points = BinaryMask(
+        contour_mask, [SemanticClass.ROAD]
+    ).remove_split_points()
     assert len(split_points) == 1
     np.testing.assert_equal(split_points[0], [2, 2])
 
@@ -204,9 +206,12 @@ def test_find_split_points():
             [0, 0, 1, 0, 0],
             [0, 0, 0, 1, 0],
             [0, 0, 0, 0, 1],
-        ], dtype=bool
+        ],
+        dtype=bool,
     )
-    _, split_points = BinaryMask(contour_mask, [SemanticClass.ROAD]).remove_split_points()
+    _, split_points = BinaryMask(
+        contour_mask, [SemanticClass.ROAD]
+    ).remove_split_points()
     assert len(split_points) == 1
     np.testing.assert_equal(split_points[0], [2, 1])
 
@@ -219,13 +224,18 @@ def test_find_split_points_merging():
             [0, 0, 1, 0, 0],
             [0, 1, 1, 1, 0],
             [0, 0, 0, 0, 0],
-        ], dtype=bool
+        ],
+        dtype=bool,
     )
-    _, split_points = BinaryMask(contour_mask, [SemanticClass.ROAD]).remove_split_points(merging_distance=0)
+    _, split_points = BinaryMask(
+        contour_mask, [SemanticClass.ROAD]
+    ).remove_split_points(merging_distance=0)
     assert len(split_points) == 2
     np.testing.assert_equal(split_points[0], [2, 1])
     np.testing.assert_equal(split_points[1], [2, 3])
 
-    _, split_points = BinaryMask(contour_mask, [SemanticClass.ROAD]).remove_split_points(merging_distance=3)
+    _, split_points = BinaryMask(
+        contour_mask, [SemanticClass.ROAD]
+    ).remove_split_points(merging_distance=3)
     assert len(split_points) == 1
     np.testing.assert_equal(split_points[0], [2, 2])

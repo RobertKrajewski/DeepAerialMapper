@@ -4,8 +4,8 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.binary_mask import BinaryMask
+from deepaerialmapper.mapping.lanemarking import Lanemarking
 
 
 class MaskVisualizer:

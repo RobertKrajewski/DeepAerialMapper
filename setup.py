@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from setuptools import find_packages, setup
 import pathlib
+
 from pkg_resources import parse_requirements
+from setuptools import find_packages, setup
 
 
 def readme():

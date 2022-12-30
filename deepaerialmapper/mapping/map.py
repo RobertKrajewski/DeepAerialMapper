@@ -1,12 +1,10 @@
 import pickle
-from typing import Tuple
+from pathlib import Path
+from typing import FrozenSet, List, Set, Tuple
 
 from pyproj import Proj
 
 from deepaerialmapper.mapping.symbol import Symbol
-
-from pathlib import Path
-from typing import FrozenSet, List, Set
 
 
 class Map:
