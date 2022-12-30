@@ -10,12 +10,13 @@ import numpy as np
 from loguru import logger
 from scipy import linalg
 
-from deepaerialmapper.mapping.lanemarking import Lanemarking
-
 IgnoreRegion = Dict[str, Any]
+Palette = Dict["SemanticClass", Tuple[int, int, int]]
 
 
 class SemanticClass(Enum):
+    """Enum of all supported semantic segmentation classes."""
+
     BLACK = 0
     VEGETATION = 2
     ROAD = 1
@@ -26,14 +27,14 @@ class SemanticClass(Enum):
     LANEMARKING = 7
 
     @classmethod
-    def from_name(cls, name):
+    def from_name(cls, name: str) -> "SemanticClass":
         for c in cls:
             if c.name == name:
                 return name
         raise ValueError(f"Could not find SemanticClass with name {name}")
 
     @classmethod
-    def from_id(cls, id):
+    def from_id(cls, id: int) -> "SemanticClass":
         for c in cls:
             if c.value == id:
                 return c
@@ -51,45 +52,49 @@ class ClassMask:
     def shape(self) -> Tuple:
         return self.mask.shape
 
-    def astype(self, dtype) -> np.ndarray:
+    def astype(self, dtype: np.dtype) -> np.ndarray:
         return self.mask.astype(dtype)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> np.ndarray:
+        """Pixel access"""
         return self.mask.__getitem__(item)
 
-    def as_color_img(self, scale_factor=255, dtype=np.uint8) -> np.ndarray:
+    def as_color_img(self, scale_factor: float = 255., dtype: np.dtype = np.uint8) -> np.ndarray:
+        """Convert mask to color image."""
         scaled_mask = self.mask * scale_factor
         scaled_mask = scaled_mask.astype(dtype)
         scaled_mask = np.repeat(scaled_mask[:, :, np.newaxis], 3, axis=2)
         return scaled_mask
 
     def to_file(self, filepath: Path) -> None:
+        """Store mask as image."""
         cv2.imwrite(str(filepath), self.mask.astype(np.uint8) * 255)
 
-    def blur_and_close(self, blur_size: int, border_effect: int = 8) -> "ClassMask":
-        """
-        blur_size : the size of kernel size of median filter
-        border_effect : the value to decrease the aliasing on the edge of image.
-                        if no value is given, no anti-aliasing happens.
+    def blur_and_close(self, blur_size: int, border_blur_size_divisor: int = 8) -> "ClassMask":
+        """Apply median blur and closing to remove noise.
+
+        Supports using a reduced filter size in border area to avoid side effects.
+
+        :param blur_size: Blur filter size.
+        :param border_blur_size_divisor: Blur size is reduced by this factor in border region. 0 to deactivate.
+        :return: Resulting ClassMask
         """
         is_bool = self.mask.dtype == bool
         mask = self.mask.astype(np.uint8)
 
-        if border_effect:
+        if border_blur_size_divisor:
             edge_size = blur_size // 2
 
             mask_center = cv2.medianBlur(mask, blur_size, 0)
-            mask = cv2.medianBlur(mask, blur_size // border_effect, 0)
+            mask = cv2.medianBlur(mask, blur_size // border_blur_size_divisor, 0)
 
-            # minimize the aliasing after blur
             mask[edge_size:-edge_size, edge_size:-edge_size] = mask_center[
-                edge_size:-edge_size, edge_size:-edge_size
-            ]
+                                                               edge_size:-edge_size, edge_size:-edge_size
+                                                               ]
 
         else:
             mask = cv2.medianBlur(mask, blur_size, 0)
 
-        # morphology: delete tiny dots inside
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
@@ -99,52 +104,43 @@ class ClassMask:
         return ClassMask(mask, self.class_names)
 
     def erode(self, erode_size: int) -> "ClassMask":
-        is_bool = self.mask.dtype == bool
-
-        if is_bool:
-            mask = self.mask.astype(np.uint8)
-
-        # morphology: erode
-        kernel = np.ones((erode_size, erode_size), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_ERODE, kernel)
-
-        if is_bool:
-            mask = mask.astype(bool)
-
-        return ClassMask(mask, self.class_names)
+        return self._morph(erode_size, cv2.MORPH_ERODE)
 
     def dilate(self, dilate_size: int) -> "ClassMask":
+        return self._morph(dilate_size, cv2.MORPH_DILATE)
+
+    def _morph(self, size: int, operation: int) -> "ClassMask":
+        """Apply a morphological operation.
+
+        :param size: Filter size
+        :param operation: Operation type, e.g. cv.MORPH_ERODE
+        :return: Resulting ClassMask
+        """
         is_bool = self.mask.dtype == bool
 
         if is_bool:
             mask = self.mask.astype(np.uint8)
 
-        # morphology: erode
-        kernel = np.ones((dilate_size, dilate_size), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel)
+        kernel = np.ones((size, size), np.uint8)
+        mask = cv2.morphologyEx(mask, operation, kernel)
 
         if is_bool:
             mask = mask.astype(bool)
 
         return ClassMask(mask, self.class_names)
 
-    def remove(self, ignore_regions: List[IgnoreRegion]) -> "ClassMask":
+    def remove_regions(self, regions: List[IgnoreRegion]) -> "ClassMask":
+        """Remove rect and polygon regions from mask.
+        :param regions: Via-style region annotations
+        :return: Resulting ClassMask
         """
-
-        Args:
-            ignore_regions: List of regions in via-json style
-
-        Returns:
-
-        """
-        if not ignore_regions:
+        if not regions:
             return ClassMask(np.copy(self.mask), self.class_names)
 
         new_mask = np.copy(self.mask).astype(np.int32)
 
-        logger.debug(f"Removing {len(ignore_regions)} regions")
-
-        for region in ignore_regions:
+        logger.debug(f"Removing {len(regions)} regions")
+        for region in regions:
             shape = region["shape_attributes"]
             if shape["name"] == "polygon":
                 xcoords = shape["all_points_x"]
@@ -172,17 +168,18 @@ class ClassMask:
         return ClassMask(new_mask > 0, self.class_names)
 
     def thin(self) -> "ClassMask":
+        """Apply thinning to the mask to retrieve e.g. the skeleton of thick lines."""
         new_mask = cv2.ximgproc.thinning(self.mask.astype(np.uint8) * 255) == 255
         return ClassMask(new_mask, self.class_names)
 
-    def find_split_points(self, debug=False) -> Tuple["ClassMask", List[np.ndarray]]:
+    def find_split_points(self, debug:bool=False) -> Tuple["ClassMask", List[np.ndarray]]:
         """Eliminate splitpoint from mask"""
 
         # Find all split points
         split_ptrs = []
         idx_ys, idx_xs = np.where(self.mask)
         for idx_y, idx_x in zip(idx_ys, idx_xs):
-            if self.is_split_point(self.mask, idx_y, idx_x):
+            if self.num_branches(self.mask, idx_y, idx_x) > 2:
                 split_ptrs.append(np.array([idx_x, idx_y]))
 
         # Remove split points from contour mask
@@ -193,10 +190,10 @@ class ClassMask:
                 for (dy, dx) in itertools.product([-1, 0, 1], [-1, 0, 1])
             ]:
                 if (
-                    (nb_idx_y < 0)
-                    or (nb_idx_x < 0)
-                    or (nb_idx_y >= self.shape[0])
-                    or (nb_idx_x >= self.shape[1])
+                        (nb_idx_y < 0)
+                        or (nb_idx_x < 0)
+                        or (nb_idx_y >= self.shape[0])
+                        or (nb_idx_x >= self.shape[1])
                 ):
                     # if index is out of image, then skip
                     continue
@@ -244,10 +241,10 @@ class ClassMask:
                     for (dy, dx) in itertools.product([-1, 0, 1], [-1, 0, 1])
                 ]:
                     if (
-                        (nb_idx_y < 0)
-                        or (nb_idx_x < 0)
-                        or (nb_idx_y >= self.shape[0])
-                        or (nb_idx_x >= self.shape[1])
+                            (nb_idx_y < 0)
+                            or (nb_idx_x < 0)
+                            or (nb_idx_y >= self.shape[0])
+                            or (nb_idx_x >= self.shape[1])
                     ):
                         # if index is out of image, then skip
                         continue
@@ -261,20 +258,20 @@ class ClassMask:
         return ClassMask(new_mask, self.class_names), filtered_split_ptrs
 
     @staticmethod
-    def is_split_point(contour_mask: np.ndarray, y: int, x: int) -> bool:
+    def num_branches(contour_mask: np.ndarray, y: int, x: int) -> bool:
         # Extract 3x3 contour around x,y
         # Easy case: Not at the mask border
         if 1 <= x <= contour_mask.shape[1] and 1 <= y <= contour_mask.shape[0]:
-            contour_mask = contour_mask[y - 1 : y + 2, x - 1 : x + 2]
+            contour_mask = contour_mask[y - 1: y + 2, x - 1: x + 2]
         else:
             c = np.zeros((3, 3))
             # Complex case at mask border
             for dx, dy in itertools.product([-1, 0, 1], [-1, 0, 1]):
                 if (
-                    y + dy < 0
-                    or x + dx < 0
-                    or y + dy >= contour_mask.shape[0]
-                    or x + dx >= contour_mask.shape[1]
+                        y + dy < 0
+                        or x + dx < 0
+                        or y + dy >= contour_mask.shape[0]
+                        or x + dx >= contour_mask.shape[1]
                 ):
                     continue
                 c[1 + dy, 1 + dx] = contour_mask[y + dy, x + dx]
@@ -314,10 +311,10 @@ class ClassMask:
 
             # Check if we are at border
             if (
-                y + dy < 0
-                or x + dx < 0
-                or y + dy >= contour_mask.shape[0]
-                or x + dx >= contour_mask.shape[1]
+                    y + dy < 0
+                    or x + dx < 0
+                    or y + dy >= contour_mask.shape[0]
+                    or x + dx >= contour_mask.shape[1]
             ):
                 continue
 
@@ -342,10 +339,10 @@ class ClassMask:
                     new_y = y + dy2
 
                     if (
-                        new_y < 0
-                        or new_x < 0
-                        or new_y >= contour_mask.shape[0]
-                        or new_x >= contour_mask.shape[1]
+                            new_y < 0
+                            or new_x < 0
+                            or new_y >= contour_mask.shape[0]
+                            or new_x >= contour_mask.shape[1]
                     ):
                         continue
 
@@ -354,7 +351,6 @@ class ClassMask:
                         check_neighbours(dx2, dy2)
 
             check_neighbours(dx, dy)
-            # check_neighbours(locations2check, x, y, dx, dy, contour_mask, is_visited)
 
         return num_lines > 2
 
@@ -376,35 +372,42 @@ class ClassMask:
             mask, self.class_names
         )  # TODO: class names don't make sense here anymore?
 
-    def contours(self, method=cv2.CHAIN_APPROX_SIMPLE) -> np.ndarray:
+    def contours(self, method: int = cv2.CHAIN_APPROX_SIMPLE) -> List[np.ndarray]:
+        """Retrieve all contours.
+
+        :param method: OpenCV.findContours approximation method
+        :return: List of OpenCV contours of shape (N,1,2)
         """
-        Args:
-            method: 1 - no simplification
-                    2 - approximate (default)
-        """
-        # contours, _ = cv2.findContours(self.astype(np.uint8), cv2.RETR_EXTERNAL, method)
         contours, _ = cv2.findContours(self.astype(np.uint8), cv2.RETR_LIST, method)
         return contours
 
 
 @dataclass
 class SegmentationMask:
-    """Multi-Class segmentation mask"""
+    """Multi-Class segmentation mask
+
+    The segmentation mask is represented by an RGB image. Each class is by a unique color as described by the palette.
+    """
 
     mask: np.ndarray
-    palette: Dict[SemanticClass, List[int]]
+    palette: Palette
 
     @property
     def shape(self) -> Tuple:
         return self.mask.shape
 
     def __getitem__(self, item):
+        """Pixel access"""
         return self.mask.__getitem__(item)
 
     def class_mask(
-        self, class_names: Union[SemanticClass, List[SemanticClass]]
+            self, class_names: Union[SemanticClass, List[SemanticClass]]
     ) -> ClassMask:
-        """Returns a binary mask for one or more classes"""
+        """Create a binary mask of a selection of classes
+
+        :param class_names: Single class name or list of class names to extract
+        :return: ClassMask of the union of the selected class masks.
+        """
         # Convert to list in case only a single class name is given
         if isinstance(class_names, SemanticClass):
             class_names = [class_names]
@@ -417,10 +420,16 @@ class SegmentationMask:
 
         return ClassMask(output_mask, class_names)
 
-    @staticmethod
-    def from_file(filepath: Path, palette: Dict[str, List[int]]) -> "SegmentationMask":
+    @classmethod
+    def from_file(cls, filepath: Path, palette: Palette) -> "SegmentationMask":
+        """Load semantic segmentation mask from RGB image.
+
+        :param filepath: Path of image file to load.
+        :param palette: Palette which maps between class and RGB colors.
+        :return: Loaded segmentation mask.
+        """
         seg_mask_img = cv2.cvtColor(cv2.imread(str(filepath)), cv2.COLOR_BGR2RGB)
-        return SegmentationMask(seg_mask_img, palette)
+        return cls(seg_mask_img, palette)
 
     def to_file(self, filepath: Path):
         cv2.imwrite(str(filepath), self.mask)

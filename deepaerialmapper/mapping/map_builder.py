@@ -13,8 +13,9 @@ from deepaerialmapper.mapping.masks import (
     SegmentationMask,
 )
 from deepaerialmapper.visualization.mask_visualizer import MaskVisualizer
-from deepaerialmapper.mapping import Map, SymbolDetector, Symbol
+from deepaerialmapper.mapping.symbol import SymbolDetector, Symbol
 from deepaerialmapper.mapping.lanelet import derive_lanelets
+from deepaerialmapper.mapping.map import Map
 
 
 @dataclass
@@ -128,7 +129,7 @@ class ContourExtractor:
             lanemarking_mask.intersection(road_trafficisland_mask)
             # Extra erode and dilate to handle pointy lanemarkings after intersection
             .erode(3).dilate(3)
-        ).remove(ignore_regions)
+        ).remove_regions(ignore_regions)
 
         # As lanemarkings are THICK, thin them to get a line only
         lanemarking_mask = lanemarking_mask.thin()
