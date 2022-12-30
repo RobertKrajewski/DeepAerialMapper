@@ -9,7 +9,7 @@ from deepaerialmapper.mapping.contour import ContourSegment
 from deepaerialmapper.mapping.masks import SemanticClass
 
 
-def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set[FrozenSet[int, int]]:
+def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set[FrozenSet[int]]:
     valid_mask = seg_mask.class_mask(
         [SemanticClass.ROAD, SemanticClass.SYMBOL, SemanticClass.LANEMARKING]
     )
@@ -17,7 +17,7 @@ def derive_lanelets(img_ref, seg_mask, lanemarkings, px2m) -> Set[FrozenSet[int,
     min_center_dist = 1.5 / px2m
     max_center_dist = np.sqrt(3.5**2 + 1.5**2) / px2m
     max_angle_diff = np.deg2rad(15)
-    lanelets: Set[FrozenSet[int, int]] = set()
+    lanelets: Set[FrozenSet[int]] = set()
     all_contours = lanemarkings
     for i_contour, lanemarking in enumerate(lanemarkings):
         # # Don't start with road borders

@@ -13,7 +13,7 @@ class Map:
     def __init__(
         self,
         lanemarkings,
-        lanelets: Set[FrozenSet[int, int]],
+        lanelets: Set[FrozenSet[int]],
         symbols: List[Symbol],
         proj: str,
         origin: Tuple[float, float],
