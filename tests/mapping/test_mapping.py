@@ -21,7 +21,7 @@ from deepaerialmapper.eval.mapping import (
 from deepaerialmapper.mapping.masks import (
     SemanticMask,
     SemanticClass,
-    ClassMask,
+    BinaryMask,
 )
 from deepaerialmapper.mapping.symbol import SymbolDetector
 from deepaerialmapper.mapping.contour import compute_pca
@@ -189,7 +189,7 @@ def test_contour():
         dtype=bool,
     )
 
-    lanemarking_mask = ClassMask(
+    lanemarking_mask = BinaryMask(
         lanemarking_mask, class_names=[SemanticClass.LANEMARKING]
     )
 

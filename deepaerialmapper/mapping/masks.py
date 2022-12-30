@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Union
 import cv2
 import numpy as np
 
-from deepaerialmapper.mapping import ClassMask
+from deepaerialmapper.mapping import BinaryMask
 
 Palette = Dict["SemanticClass", Tuple[int, int, int]]
 
@@ -58,7 +58,7 @@ class SemanticMask:
 
     def class_mask(
         self, class_names: Union[SemanticClass, List[SemanticClass]]
-    ) -> ClassMask:
+    ) -> BinaryMask:
         """Create a binary mask of a selection of classes
 
         :param class_names: Single class name or list of class names to extract
@@ -74,7 +74,7 @@ class SemanticMask:
                 output_mask, np.all(self.mask == self.palette[class_name], axis=2)
             )
 
-        return ClassMask(output_mask, class_names)
+        return BinaryMask(output_mask, class_names)
 
     @classmethod
     def from_file(cls, filepath: Path, palette: Palette) -> "SemanticMask":

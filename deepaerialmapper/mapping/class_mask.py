@@ -15,7 +15,7 @@ IgnoreRegion = Dict[str, Any]
 
 
 @dataclass
-class ClassMask:
+class BinaryMask:
     """Binary segmentation mask"""
 
     mask: np.ndarray
@@ -47,7 +47,7 @@ class ClassMask:
 
     def blur_and_close(
         self, blur_size: int, border_blur_size_divisor: int = 8
-    ) -> "ClassMask":
+    ) -> "BinaryMask":
         """Apply median blur and closing to remove noise.
 
         Supports using a reduced filter size in border area to avoid side effects.
@@ -78,15 +78,15 @@ class ClassMask:
         if is_bool:
             mask = mask.astype(bool)
 
-        return ClassMask(mask, self.class_names)
+        return BinaryMask(mask, self.class_names)
 
-    def erode(self, erode_size: int) -> "ClassMask":
+    def erode(self, erode_size: int) -> "BinaryMask":
         return self._morph(erode_size, cv2.MORPH_ERODE)
 
-    def dilate(self, dilate_size: int) -> "ClassMask":
+    def dilate(self, dilate_size: int) -> "BinaryMask":
         return self._morph(dilate_size, cv2.MORPH_DILATE)
 
-    def _morph(self, size: int, operation: int) -> "ClassMask":
+    def _morph(self, size: int, operation: int) -> "BinaryMask":
         """Apply a morphological operation.
 
         :param size: Filter size
@@ -104,15 +104,15 @@ class ClassMask:
         if is_bool:
             mask = mask.astype(bool)
 
-        return ClassMask(mask, self.class_names)
+        return BinaryMask(mask, self.class_names)
 
-    def remove_regions(self, regions: List[IgnoreRegion]) -> "ClassMask":
+    def remove_regions(self, regions: List[IgnoreRegion]) -> "BinaryMask":
         """Remove rect and polygon regions from mask.
         :param regions: Via-style region annotations
         :return: Resulting ClassMask
         """
         if not regions:
-            return ClassMask(np.copy(self.mask), self.class_names)
+            return BinaryMask(np.copy(self.mask), self.class_names)
 
         new_mask = np.copy(self.mask).astype(np.int32)
 
@@ -142,16 +142,16 @@ class ClassMask:
 
             cv2.fillPoly(new_mask, [polygon], 0)
 
-        return ClassMask(new_mask > 0, self.class_names)
+        return BinaryMask(new_mask > 0, self.class_names)
 
-    def thin(self) -> "ClassMask":
+    def thin(self) -> "BinaryMask":
         """Apply thinning to the mask to retrieve e.g. the skeleton of thick lines."""
         new_mask = cv2.ximgproc.thinning(self.mask.astype(np.uint8) * 255) == 255
-        return ClassMask(new_mask, self.class_names)
+        return BinaryMask(new_mask, self.class_names)
 
     def find_split_points(
         self, debug: bool = False
-    ) -> Tuple["ClassMask", List[np.ndarray]]:
+    ) -> Tuple["BinaryMask", List[np.ndarray]]:
         """Eliminate splitpoint from mask"""
 
         # Find all split points
@@ -234,7 +234,7 @@ class ClassMask:
             plt.imshow(drawing)
             plt.show()
 
-        return ClassMask(new_mask, self.class_names), filtered_split_ptrs
+        return BinaryMask(new_mask, self.class_names), filtered_split_ptrs
 
     @staticmethod
     def num_branches(contour_mask: np.ndarray, y: int, x: int) -> bool:
@@ -333,21 +333,21 @@ class ClassMask:
 
         return num_lines > 2
 
-    def union(self, other_mask: "ClassMask") -> "ClassMask":
+    def union(self, other_mask: "BinaryMask") -> "BinaryMask":
         mask = np.bitwise_or(self.mask, other_mask.mask)
         class_names = list(chain(self.class_names, other_mask.class_names))
-        return ClassMask(mask, class_names)
+        return BinaryMask(mask, class_names)
 
-    def intersection(self, other_mask: "ClassMask") -> "ClassMask":
+    def intersection(self, other_mask: "BinaryMask") -> "BinaryMask":
         mask = np.bitwise_and(self.mask, other_mask.mask)
-        return ClassMask(
+        return BinaryMask(
             mask, self.class_names
         )  # TODO: class names don't make sense here anymore?
 
-    def subtraction(self, other_mask: "ClassMask") -> "ClassMask":
+    def subtraction(self, other_mask: "BinaryMask") -> "BinaryMask":
         """Remove pixels of other mask from this mask"""
         mask = np.bitwise_and(self.mask, ~other_mask.mask)
-        return ClassMask(
+        return BinaryMask(
             mask, self.class_names
         )  # TODO: class names don't make sense here anymore?
 

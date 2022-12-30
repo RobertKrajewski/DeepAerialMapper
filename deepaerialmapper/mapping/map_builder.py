@@ -8,7 +8,7 @@ from deepaerialmapper.mapping.contour import ContourManager
 from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.masks import (
     SemanticClass,
-    ClassMask,
+    BinaryMask,
     IgnoreRegion,
     SemanticMask,
 )
@@ -92,7 +92,7 @@ class ContourExtractor:
 
     def from_mask(
         self, seg_mask: SemanticMask, ignore_regions: List[IgnoreRegion]
-    ) -> Tuple[ContourManager, ClassMask, ContourManager]:
+    ) -> Tuple[ContourManager, BinaryMask, ContourManager]:
         """Extract contours of road borders and lanemarkings from a given semantic segmentation mask.
 
         Allows to manually remove mask regions from lanemarking contour extraction through ignore regions.

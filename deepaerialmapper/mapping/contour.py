@@ -11,7 +11,7 @@ import scipy
 from loguru import logger
 
 from deepaerialmapper.mapping.lanemarking import Lanemarking
-from deepaerialmapper.mapping.masks import ClassMask
+from deepaerialmapper.mapping.masks import BinaryMask
 
 
 @dataclass
@@ -240,7 +240,7 @@ class ContourManager:
         self.contours = contours
 
     @classmethod
-    def from_mask(cls, mask: ClassMask) -> "ContourManager":
+    def from_mask(cls, mask: BinaryMask) -> "ContourManager":
         contours = mask.contours(1)
         return cls(contours)
 
