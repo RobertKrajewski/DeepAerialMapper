@@ -18,7 +18,7 @@ class MaskVisualizer:
         contours=None,
         lanemarkings=None,
         background=None,
-        show=True,
+        show=False,
         window_name: str = "",
         random: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
