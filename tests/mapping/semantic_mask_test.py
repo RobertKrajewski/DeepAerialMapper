@@ -3,7 +3,7 @@ import numpy as np
 from mapping import SemanticClass, SemanticMask
 
 
-def test_segmentation_mask_class_mask() -> None:
+def test_semantic_mask_class_mask() -> None:
     palette = {
         SemanticClass.BLACK: (0, 0, 0),
         SemanticClass.VEGETATION: (1, 1, 1),

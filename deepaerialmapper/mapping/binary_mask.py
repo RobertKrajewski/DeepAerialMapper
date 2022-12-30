@@ -9,8 +9,6 @@ import numpy as np
 from loguru import logger
 from scipy import linalg
 
-from mapping import SemanticClass
-
 IgnoreRegion = Dict[str, Any]
 
 
@@ -19,7 +17,7 @@ class BinaryMask:
     """Binary segmentation mask"""
 
     mask: np.ndarray
-    class_names: List[SemanticClass]
+    class_names: List["SemanticClass"]
 
     @property
     def shape(self) -> Tuple:
@@ -45,7 +43,7 @@ class BinaryMask:
         """Store mask as image."""
         cv2.imwrite(str(filepath), self.mask.astype(np.uint8) * 255)
 
-    def blur_and_close(
+    def median_blur(
         self, blur_size: int, border_blur_size_divisor: int = 8
     ) -> "BinaryMask":
         """Apply median blur and closing to remove noise.
@@ -72,13 +70,13 @@ class BinaryMask:
         else:
             mask = cv2.medianBlur(mask, blur_size, 0)
 
-        kernel = np.ones((3, 3), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
         if is_bool:
             mask = mask.astype(bool)
 
         return BinaryMask(mask, self.class_names)
+
+    def close(self, close_size: int) -> "BinaryMask":
+        return self._morph(close_size, cv2.MORPH_CLOSE)
 
     def erode(self, erode_size: int) -> "BinaryMask":
         return self._morph(erode_size, cv2.MORPH_ERODE)
@@ -149,102 +147,122 @@ class BinaryMask:
         new_mask = cv2.ximgproc.thinning(self.mask.astype(np.uint8) * 255) == 255
         return BinaryMask(new_mask, self.class_names)
 
-    def find_split_points(
-        self, debug: bool = False
+    def remove_split_points(
+        self, merging_distance: int = 5, debug: bool = False
     ) -> Tuple["BinaryMask", List[np.ndarray]]:
-        """Eliminate splitpoint from mask"""
+        """Find and remove split points from mask.
+
+        Split points typically occur when lanes start/end/split/merge as the number of required lanemarkings changes.
+        This function finds these locations in the mask and removes them. This allows to describe the lanemarkings by
+        more than one contour and lanemarking.
+
+        Additionally allows to merge split points that are very close (<`merging_distance`).
+
+        :param merging_distance: Distance threshold for merging split points. 0 to deactivate merging.
+        :param debug: If true, an interactive plot windows shows the found split points.
+        :return: Tuple of 1) Mask without (unmerged) split points, 2) List of split points after merging (x,y)
+        """
 
         # Find all split points
-        split_ptrs = []
-        idx_ys, idx_xs = np.where(self.mask)
-        for idx_y, idx_x in zip(idx_ys, idx_xs):
-            if self.num_branches(self.mask, idx_y, idx_x) > 2:
-                split_ptrs.append(np.array([idx_x, idx_y]))
+        split_points = []
+        for y, x in zip(*np.where(self.mask)):
+            if self._is_split_location(self.mask, y, x):
+                split_points.append(np.array([x, y]))
 
-        # Remove split points from contour mask
+        # Remove split points (and their 3x3 neighbours) from contour mask
         new_mask = np.copy(self.mask)
-        for idx_x, idx_y in split_ptrs:
-            for (nb_idx_y, nb_idx_x) in [
-                (idx_y + dy, idx_x + dx)
+        for split_x, split_y in split_points:
+            for (x, y) in [
+                (split_y + dy, split_x + dx)
                 for (dy, dx) in itertools.product([-1, 0, 1], [-1, 0, 1])
             ]:
-                if (
-                    (nb_idx_y < 0)
-                    or (nb_idx_x < 0)
-                    or (nb_idx_y >= self.shape[0])
-                    or (nb_idx_x >= self.shape[1])
-                ):
-                    # if index is out of image, then skip
+                if (y < 0) or (x < 0) or (y >= self.shape[0]) or (x >= self.shape[1]):
+                    # Location out of image
                     continue
-                new_mask[nb_idx_y, nb_idx_x] = 0
+                new_mask[y, x] = 0
 
-        # Detect groups of split points and keep only one per group
-        filtered_split_ptrs = []
-        visited = [False] * len(split_ptrs)
-        distance_threshold = 5
-        for i_split_ptr, split_ptr in enumerate(split_ptrs):
-            if visited[i_split_ptr]:
-                continue
-
-            close_ptrs = [split_ptr]
-
-            for j_split_ptr in range(i_split_ptr, len(split_ptrs)):
-                if visited[j_split_ptr]:
+        if merging_distance > 0:
+            # Detect groups of split points and keep only one per group
+            grouped_split_points = []
+            visited = [False] * len(split_points)
+            for i_split_ptr, split_ptr in enumerate(split_points):
+                if visited[i_split_ptr]:
                     continue
 
-                other_point = split_ptrs[j_split_ptr]
-                # Skip all points too close to current one
-                if linalg.norm(split_ptr - other_point) < distance_threshold:
-                    visited[j_split_ptr] = True
-                    close_ptrs.append(other_point)
+                close_ptrs = [split_ptr]
 
-            filtered_split_ptrs.append(
-                np.round(np.mean(close_ptrs, axis=0)).astype(int)
+                for j_split_ptr in range(i_split_ptr, len(split_points)):
+                    if visited[j_split_ptr]:
+                        continue
+
+                    other_point = split_points[j_split_ptr]
+                    # Skip all points too close to current one
+                    if linalg.norm(split_ptr - other_point) < merging_distance:
+                        visited[j_split_ptr] = True
+                        close_ptrs.append(other_point)
+
+                grouped_split_points.append(
+                    np.round(np.mean(close_ptrs, axis=0)).astype(int)
+                )
+                visited[i_split_ptr] = True
+
+            logger.debug(
+                f"Removed {len(split_points) - len(grouped_split_points)} split points due to proximity."
             )
-            visited[i_split_ptr] = True
-
+        else:
+            grouped_split_points = split_points
         logger.debug(
-            f"Removed {len(split_ptrs) - len(filtered_split_ptrs)} split points due to proximity."
-        )
-        logger.debug(
-            f"Found {len(filtered_split_ptrs)} remaining split points:\n{np.asarray(filtered_split_ptrs)}"
+            f"Found {len(grouped_split_points)} (remaining split) points:\n{np.asarray(grouped_split_points)}"
         )
 
-        # Visualize for debugging
+        # Debugging visualization
         if debug:
             drawing = cv2.cvtColor(new_mask.astype(np.uint8) * 255, cv2.COLOR_GRAY2RGB)
+            for x, y in split_points:
+                drawing[y, x] = (0, 0, 255)
 
-            for idx_x, idx_y in filtered_split_ptrs:
-                for (nb_idx_y, nb_idx_x) in [
-                    (idx_y + dy, idx_x + dx)
-                    for (dy, dx) in itertools.product([-1, 0, 1], [-1, 0, 1])
-                ]:
-                    if (
-                        (nb_idx_y < 0)
-                        or (nb_idx_x < 0)
-                        or (nb_idx_y >= self.shape[0])
-                        or (nb_idx_x >= self.shape[1])
-                    ):
-                        # if index is out of image, then skip
-                        continue
-                    drawing[nb_idx_y, nb_idx_x] = (255, 0, 0)
+            for x, y in grouped_split_points:
+                drawing[y, x] = (255, 0, 0)
 
             import matplotlib.pyplot as plt
-
             plt.imshow(drawing)
             plt.show()
 
-        return BinaryMask(new_mask, self.class_names), filtered_split_ptrs
+        return BinaryMask(new_mask, self.class_names), grouped_split_points
 
     @staticmethod
-    def num_branches(contour_mask: np.ndarray, y: int, x: int) -> bool:
+    def _is_split_location(contour_mask: np.ndarray, y: int, x: int) -> bool:
+        """Determine if contour splits at a given location.
+
+        A contour splits at a given location, if more than two disconnected (1-connectivity) lines start
+        in its 3x3 neighbourhood.
+
+        Examples:
+        At location X three disconnected groups of 1's start -> X is a fork location
+        01100
+        00X10
+        11100
+
+        At location X two disconnected groups of 1's start -> X is NOT a fork location
+        01111
+        00X10
+        11100
+
+        Note: This code was benchmark against skimage.measure.label(..., connectivity=1)
+
+        :param contour_mask: Mask containing contours, e.g. of lanemarkings
+        :param y: y-coordinate of the point to check
+        :param x: x-coordinate of the point to check
+        :return: True, if more than two independent branches start from this point
+        """
         # Extract 3x3 contour around x,y
-        # Easy case: Not at the mask border
         if 1 <= x <= contour_mask.shape[1] and 1 <= y <= contour_mask.shape[0]:
+            # Easy case: Not at the mask border
             contour_mask = contour_mask[y - 1 : y + 2, x - 1 : x + 2]
         else:
-            c = np.zeros((3, 3))
             # Complex case at mask border
+            c = np.zeros((3, 3))
+            # Check and copy each neighbour individually
             for dx, dy in itertools.product([-1, 0, 1], [-1, 0, 1]):
                 if (
                     y + dy < 0
@@ -255,6 +273,7 @@ class BinaryMask:
                     continue
                 c[1 + dy, 1 + dx] = contour_mask[y + dy, x + dx]
             contour_mask = c
+
         # Change x and y to center of the crop
         x = 1
         y = 1

@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Union
 import cv2
 import numpy as np
 
-from deepaerialmapper.mapping import BinaryMask
+from deepaerialmapper.mapping.binary_mask import BinaryMask
 
 Palette = Dict["SemanticClass", Tuple[int, int, int]]
 

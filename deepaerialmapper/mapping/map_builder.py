@@ -104,9 +104,13 @@ class ContourExtractor:
                  * Road border contours
         """
         # Find road borders
-        road_mask = seg_mask.class_mask(
-            [SemanticClass.ROAD, SemanticClass.SYMBOL, SemanticClass.LANEMARKING]
-        ).blur_and_close(self.road_border_blur_size, self.road_border_border_size)
+        road_mask = (
+            seg_mask.class_mask(
+                [SemanticClass.ROAD, SemanticClass.SYMBOL, SemanticClass.LANEMARKING]
+            )
+            .median_blur(self.road_border_blur_size, self.road_border_border_size)
+            .close(3)
+        )
 
         road_contours = (
             ContourManager.from_mask(road_mask)
@@ -121,9 +125,13 @@ class ContourExtractor:
         road_trafficisland_mask = road_mask.union(
             seg_mask.class_mask(SemanticClass.TRAFFICISLAND)
         )
-        road_trafficisland_mask = road_trafficisland_mask.blur_and_close(
-            self.lanemarking_blur_size, self.lanemarking_border_size
-        ).erode(self.lanemarking_erode_size)
+        road_trafficisland_mask = (
+            road_trafficisland_mask.median_blur(
+                self.lanemarking_blur_size, self.lanemarking_border_size
+            )
+            .close(3)
+            .erode(self.lanemarking_erode_size)
+        )
         lanemarking_mask = (
             lanemarking_mask.intersection(road_trafficisland_mask)
             # Extra erode and dilate to handle pointy lanemarkings after intersection
@@ -132,7 +140,9 @@ class ContourExtractor:
 
         # As lanemarkings are THICK, thin them to get a line only
         lanemarking_mask = lanemarking_mask.thin()
-        lanemarking_mask, split_points = lanemarking_mask.find_split_points(debug=False)
+        lanemarking_mask, split_points = lanemarking_mask.remove_split_points(
+            debug=False
+        )
         lanemarking_contours = (
             ContourManager.from_mask(lanemarking_mask)
             .unique_coordinates()

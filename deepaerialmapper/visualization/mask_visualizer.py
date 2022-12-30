@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from deepaerialmapper.mapping.lanemarking import Lanemarking
-from deepaerialmapper.mapping.masks import BinaryMask
+from deepaerialmapper.mapping.binary_mask import BinaryMask
 
 
 class MaskVisualizer:
