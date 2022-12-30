@@ -142,10 +142,37 @@ class BinaryMask:
 
         return BinaryMask(new_mask > 0, self.class_names)
 
+    def union(self, other_mask: "BinaryMask") -> "BinaryMask":
+        mask = np.bitwise_or(self.mask, other_mask.mask)
+        class_names = list(chain(self.class_names, other_mask.class_names))
+        return BinaryMask(mask, class_names)
+
+    def intersection(self, other_mask: "BinaryMask") -> "BinaryMask":
+        mask = np.bitwise_and(self.mask, other_mask.mask)
+        return BinaryMask(
+            mask, self.class_names
+        )  # TODO: class names don't make sense here anymore?
+
+    def subtraction(self, other_mask: "BinaryMask") -> "BinaryMask":
+        """Remove pixels of other mask from this mask"""
+        mask = np.bitwise_and(self.mask, ~other_mask.mask)
+        return BinaryMask(
+            mask, self.class_names
+        )  # TODO: class names don't make sense here anymore?
+
     def thin(self) -> "BinaryMask":
         """Apply thinning to the mask to retrieve e.g. the skeleton of thick lines."""
         new_mask = cv2.ximgproc.thinning(self.mask.astype(np.uint8) * 255) == 255
         return BinaryMask(new_mask, self.class_names)
+
+    def contours(self, method: int = cv2.CHAIN_APPROX_SIMPLE) -> List[np.ndarray]:
+        """Retrieve all contours.
+
+        :param method: OpenCV.findContours approximation method
+        :return: List of OpenCV contours of shape (N,1,2)
+        """
+        contours, _ = cv2.findContours(self.astype(np.uint8), cv2.RETR_LIST, method)
+        return contours
 
     def remove_split_points(
         self, merging_distance: int = 5, debug: bool = False
@@ -351,30 +378,3 @@ class BinaryMask:
             check_neighbours(dx, dy)
 
         return num_lines > 2
-
-    def union(self, other_mask: "BinaryMask") -> "BinaryMask":
-        mask = np.bitwise_or(self.mask, other_mask.mask)
-        class_names = list(chain(self.class_names, other_mask.class_names))
-        return BinaryMask(mask, class_names)
-
-    def intersection(self, other_mask: "BinaryMask") -> "BinaryMask":
-        mask = np.bitwise_and(self.mask, other_mask.mask)
-        return BinaryMask(
-            mask, self.class_names
-        )  # TODO: class names don't make sense here anymore?
-
-    def subtraction(self, other_mask: "BinaryMask") -> "BinaryMask":
-        """Remove pixels of other mask from this mask"""
-        mask = np.bitwise_and(self.mask, ~other_mask.mask)
-        return BinaryMask(
-            mask, self.class_names
-        )  # TODO: class names don't make sense here anymore?
-
-    def contours(self, method: int = cv2.CHAIN_APPROX_SIMPLE) -> List[np.ndarray]:
-        """Retrieve all contours.
-
-        :param method: OpenCV.findContours approximation method
-        :return: List of OpenCV contours of shape (N,1,2)
-        """
-        contours, _ = cv2.findContours(self.astype(np.uint8), cv2.RETR_LIST, method)
-        return contours
