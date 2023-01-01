@@ -59,7 +59,7 @@ class LanemarkingExtractor:
         )
 
         # Fill gaps between dashed and solid lanemarkings
-        dashed_lanemarking = Lanemarking.extend_to(
+        Lanemarking.extend_to(
             dashed_lanemarking,
             solid_lanemarkings,
             img_shape,

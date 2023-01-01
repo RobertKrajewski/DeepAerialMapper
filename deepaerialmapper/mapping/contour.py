@@ -237,7 +237,7 @@ class ContourSegment:
         # This is the intersection point
         return p + t * r, t
 
-    def intersection_image_border(self, img_shape: Tuple[int]):
+    def intersection_image_border(self, img_shape: Tuple[int, int]):
         h, w = img_shape
         borders = [
             np.asarray([0, 0, 0, h]).reshape((2, 1, 2)),  # left
@@ -249,7 +249,7 @@ class ContourSegment:
         for border in borders:
             intersection = ContourSegment.from_coordinates(border).intersection(self)
 
-            if intersection is not None and 0 < intersection[1] < 1:
+            if intersection is not None and 0 <= intersection[1] <= 1:
                 intersection_point = intersection[0]
                 distance = self.oriented_distance_point(
                     np.asarray(intersection_point), endpoint=True
@@ -257,7 +257,7 @@ class ContourSegment:
                 if distance[0] > 0:
                     return intersection_point, distance
 
-        return None
+        return None, None
 
 
 Contour = List[ContourSegment]
