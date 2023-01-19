@@ -9,10 +9,15 @@ import typer
 import yaml
 from loguru import logger
 
-from deepaerialmapper.mapping import (ContourExtractor, IgnoreRegion,
-                                      LanemarkingExtractor, MapBuilder,
-                                      SemanticClass, SemanticMask,
-                                      SymbolDetector)
+from deepaerialmapper.mapping import (
+    ContourExtractor,
+    IgnoreRegion,
+    LanemarkingExtractor,
+    MapBuilder,
+    SemanticClass,
+    SemanticMask,
+    SymbolDetector,
+)
 
 
 def _load_configs_and_prepare(

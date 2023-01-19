@@ -64,7 +64,7 @@ class Lanemarking:
                 intersection_point, distance = e.intersection_image_border(img_shape)
                 if (
                     intersection_point is not None
-                    and 0 < distance[0] < max_long_distance
+                    and 0 < distance < max_long_distance
                 ):
                     new_point = np.round(intersection_point).astype(int)
                     lanemarking.elements.append(new_point[np.newaxis, np.newaxis, :])
@@ -82,7 +82,7 @@ class Lanemarking:
                 intersection_point, distance = s.intersection_image_border(img_shape)
                 if (
                     intersection_point is not None
-                    and 0 < distance[0] < max_long_distance
+                    and 0 < distance < max_long_distance
                 ):
                     new_point = np.round(intersection_point).astype(int)
                     lanemarking.elements.insert(0, new_point[np.newaxis, np.newaxis, :])

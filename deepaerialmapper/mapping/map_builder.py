@@ -43,7 +43,7 @@ class LanemarkingExtractor:
         (
             short_lanemarking_contours,
             solid_lanemarking_contours,
-        ) = lanemarking_contours.filter_by_length(
+        ) = lanemarking_contours.group_by_length(
             max_length=self.filter_max_length, min_length=self.filter_min_length
         )
 
