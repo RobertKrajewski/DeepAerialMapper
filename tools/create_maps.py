@@ -63,7 +63,7 @@ def _load_configs_and_prepare(
     logger.info(
         f"Found {len(segmentation_files)} segmentation mask(s) in {input_dir}:\n{pprint.pformat(segmentation_files)}"
     )
-    return segmentation_files, meta, config, ignore, meta
+    return segmentation_files, meta, config, ignore
 
 
 def create_maps(

@@ -5,7 +5,7 @@ import cv2
 from loguru import logger
 
 from deepaerialmapper.mapping.binary_mask import BinaryMask, IgnoreRegion
-from deepaerialmapper.mapping.contour import ContourManager
+from deepaerialmapper.mapping.contour_manager import ContourManager
 from deepaerialmapper.mapping.lanelet import derive_lanelets
 from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.map import Map

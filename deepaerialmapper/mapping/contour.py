@@ -1,4 +1,3 @@
-import itertools
 import math
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
@@ -6,6 +5,8 @@ from sklearn.decomposition import PCA
 
 import cv2
 import numpy as np
+
+Contour = List["ContourSegment"]
 
 
 @dataclass
@@ -60,14 +61,14 @@ class ContourSegment:
 
         x, y = point
         return np.abs(
-            (a * x - b * y + c) / (np.sqrt(a**2 + b**2))
+            (a * x - b * y + c) / (np.sqrt(a ** 2 + b ** 2))
         )  # Project point on orthogonal slope
 
     def closest_point(
-        self,
-        points: List[np.ndarray],
-        max_long_distance: float,
-        max_lat_distance: float,
+            self,
+            points: List[np.ndarray],
+            max_long_distance: float,
+            max_lat_distance: float,
     ) -> np.ndarray:
         """Find the closest point in list of points.
 
@@ -79,7 +80,7 @@ class ContourSegment:
         :param points: List of points (2[x,y])
         :return: Coordinates of the closest point (2[x,y])
         """
-        if not points:
+        if len(points) == 0:
             raise ValueError("List of points is empty!")
 
         min_dist_point = None
@@ -113,12 +114,12 @@ class ContourSegment:
 
     @staticmethod
     def group_by_length(
-        contour: "Contour", threshold_length: float
+            contour: "Contour", threshold_length: float
     ) -> Tuple["Contour", "Contour"]:
         """Group list of segments by arc length into short and long segments.
 
         :param contour: List of segments
-        :return: List of short segments, list of long segments
+        :return: List of long segments, list of short segments
         """
         long_segments: Contour = []
         short_segments: Contour = []
@@ -130,38 +131,45 @@ class ContourSegment:
 
         return long_segments, short_segments
 
-    def compute_pca(self):
-        """Compute the eigenvector and centroid position of a contour based on PCA analysis"""
-        pts = self.coordinates
+    def _pca(self) -> Tuple[np.ndarray, float, np.ndarray]:
+        """Derive segment center, orientation and eigenvectors using pca.
 
+        Orientation and eigenvectors point from start to end of segment.
+
+        :return: (center location, orientation [rad], eigenvectors)
+        """
         mean, eigenvectors, eigenvalues = cv2.PCACompute2(
-            np.reshape(pts.astype(float), (-1, 2)), np.empty(0)
+            np.reshape(self.coordinates.astype(float), (-1, 2)), np.empty(0)
         )
-        # Find the end_point two points
-        end_pointA = mean + eigenvectors[0] * np.max(np.linalg.norm(mean - pts, axis=2))
-        end_pointB = mean - eigenvectors[0] * np.max(np.linalg.norm(mean - pts, axis=2))
-        center = [mean[0, 0], mean[0, 1]]
+        center = mean[0, :2]
         orientation = np.arctan2(eigenvectors[0, 1], eigenvectors[0, 0])
 
-        simple_orientation = np.arctan2(
-            pts[-1, 0, 1] - pts[0, 0, 1], pts[-1, 0, 0] - pts[0, 0, 0]
+        # Orientation of the line connecting the first and the last point
+        start_end_orientation = np.arctan2(
+            self.coordinates[-1, 0, 1] - self.coordinates[0, 0, 1],
+            self.coordinates[-1, 0, 0] - self.coordinates[0, 0, 0]
         )
 
-        # Make sure that orientation always is "away" from the first coordinate
-        if abs(orientation - simple_orientation) > np.pi / 2:
+        # Make sure that the orientation points from the first to the last point
+        if abs(orientation - start_end_orientation) > np.pi / 2:
             orientation += np.pi
             eigenvectors[0] *= -1
 
-        return end_pointA, end_pointB, center, orientation, eigenvectors, eigenvalues
+        return center, orientation, eigenvectors
 
     def oriented_distance(self, other_segment: "ContourSegment") -> Tuple[float, float]:
-        _, _, center, _, ev, _ = self.compute_pca()
-        _, _, o_center, _, o_ev, _ = other_segment.compute_pca()
-        center = np.asarray(center)
-        o_center = np.asarray(o_center)
+        """Calculate longitudinal and lateral distance between centers of this and another segment using pca.
 
+        If no distance can be calculated as no eigenvectors can be derived, (-1, -1) is returned
+
+        :return: (longitudinal distance, lateral distance)
+        """
+        center, _, ev = self._pca()
+        o_center, _, o_ev = other_segment._pca()
+
+        # If this segment doesn't have valid eigenvectors, no distance can be derived
         if len(ev) < 2:
-            return 10000, 10000
+            return -1., -1.
 
         # Project distance between centers to long and lat direction of current element
         d = o_center - center
@@ -170,49 +178,41 @@ class ContourSegment:
 
         return long_dist, lat_dist
 
-    def endpoint_distance(self, other_segment: "ContourSegment") -> Tuple[float, float]:
-        distances = []
-        # Calculate L2 distance for every startpoint endpoint combination
-        for idx_self, idx_other in itertools.product([-1], [0, -1]):
-            distances.append(
-                np.linalg.norm(
-                    self.coordinates[idx_self] - other_segment.coordinates[idx_other]
-                )
-            )
+    def endpoint_distance(self, other_segment: "ContourSegment") -> float:
+        """Calculate minimal distance from end of this segment (last point) to other segment's both end points."""
 
-        return min(distances), 0.0
+        distances = [np.linalg.norm(self.coordinates[-1] - other_segment.coordinates[0]),
+                     np.linalg.norm(self.coordinates[-1] - other_segment.coordinates[-1])]
+        return min(distances)
 
     def oriented_distance_point(
-        self, o_center: np.ndarray, endpoint: bool = False
+            self, point: np.ndarray, endpoint: bool = False
     ) -> Tuple[float, float]:
-        _, _, center, _, ev, _ = self.compute_pca()
-        center = np.asarray(center)
+        """Calculate longitudinal and lateral distance this segment and a point using pca.
+
+        :param endpoint: If true, this segment last point is used instead of its center.
+        :return: (longitudinal distance, lateral distance)
+        """
+        center, _, ev = self._pca()
 
         if endpoint:
             center = self.coordinates[-1, 0]
 
+        # If this segment doesn't have valid eigenvectors, no distance can be derived
         if len(ev) < 2:
-            return 10000, 10000
+            return -1., -1.
 
         # Project distance between centers to long and lat direction of current element
-        d = o_center - center
+        d = point - center
         long_dist = d @ ev[0]
         lat_dist = d @ ev[1]
 
         return long_dist, lat_dist
 
-    def intersection(self, other_segment: "ContourSegment") -> Tuple[np.ndarray, float]:
+    def intersection(self, other_segment: "ContourSegment") -> Optional[Tuple[np.ndarray, float]]:
         """
-
         Approximates this and other contour by line (first and last coordinate)
-
-        Args:
-            other_segment:
-
-        Returns:
-            None, if no intersection exists
-            Intersection coordinates and relative position for current segment
-
+        :return: Intersection point and relative location, None if segments are parallel
         """
         p = self.coordinates[0, 0]
         r = self.coordinates[-1, 0] - self.coordinates[0, 0]
@@ -221,13 +221,15 @@ class ContourSegment:
         s = other_segment.coordinates[-1, 0] - other_segment.coordinates[0, 0]
 
         denom = np.cross(r, s)
+        # No intersection if lines are parallel
         if denom == 0.0:
             return None
 
         t = np.cross(q - p, s) / denom
 
         # This is the intersection point
-        return p + t * r, t
+        intersection_point = p + t * r
+        return intersection_point, t
 
     def intersection_image_border(self, img_shape: Tuple[int, int]) -> Tuple[Optional[np.ndarray], Optional[float]]:
         """Check for intersection with image borders.
@@ -236,6 +238,7 @@ class ContourSegment:
         :return: (intersection_point, distance_from_center) if intersection exists, (None, None) otherwise
         """
         h, w = img_shape
+        # Define all image borders in format (x1, y1, x2, y2)
         borders = [
             np.asarray([0, 0, 0, h]).reshape((2, 1, 2)),  # left
             np.asarray([0, h, w, h]).reshape((2, 1, 2)),  # bottom
@@ -259,6 +262,3 @@ class ContourSegment:
                     return intersection_point, long_distance
 
         return None, None
-
-
-Contour = List[ContourSegment]

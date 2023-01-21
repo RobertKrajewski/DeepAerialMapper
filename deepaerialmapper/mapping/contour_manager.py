@@ -10,7 +10,7 @@ from loguru import logger
 
 from deepaerialmapper.mapping.binary_mask import BinaryMask
 from deepaerialmapper.mapping.lanemarking import Lanemarking
-from mapping.contour import ContourSegment
+from deepaerialmapper.mapping.contour import ContourSegment
 
 
 class ContourManager:
@@ -437,6 +437,8 @@ class ContourManager:
         pairwise_distances = np.zeros((num_segments, num_segments, 2))
         for i_contour, contour in enumerate(contour_segments):
             for j_contour, other_contour in enumerate(contour_segments):
+
+                # Avoid matching a contour to itself
                 if i_contour == j_contour:
                     pairwise_distances[i_contour, j_contour] = np.array(
                         [np.inf, np.inf]
@@ -444,14 +446,15 @@ class ContourManager:
                     continue
 
                 if distance_mode == "centers_oriented":
-                    pairwise_distances[
-                        i_contour, j_contour
-                    ] = contour.oriented_distance(other_contour)
+                    distances = contour.oriented_distance(other_contour)
                 else:
-                    # Calculate distance between start and endpoints
-                    pairwise_distances[
-                        i_contour, j_contour
-                    ] = contour.endpoint_distance(other_contour)
+                    distances = [contour.endpoint_distance(other_contour), 0.0]
+
+                # If no valid distance could be calculated, avoid matching
+                if distances[0] == -1.:
+                    distances = [np.inf, np.inf]
+
+                pairwise_distances[i_contour, j_contour] = distances
 
         # For each contour find best contour in front (to the right side in mage) by minimal longitudinal distance
         cost = pairwise_distances[..., 0] + np.abs(pairwise_distances[..., 1]) * 8
