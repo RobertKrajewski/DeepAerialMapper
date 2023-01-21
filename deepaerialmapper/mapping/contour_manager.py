@@ -9,8 +9,8 @@ import scipy
 from loguru import logger
 
 from deepaerialmapper.mapping.binary_mask import BinaryMask
-from deepaerialmapper.mapping.lanemarking import Lanemarking
 from deepaerialmapper.mapping.contour import ContourSegment
+from deepaerialmapper.mapping.lanemarking import Lanemarking
 
 
 class ContourManager:
@@ -451,7 +451,7 @@ class ContourManager:
                     distances = [contour.endpoint_distance(other_contour), 0.0]
 
                 # If no valid distance could be calculated, avoid matching
-                if distances[0] == -1.:
+                if distances[0] == -1.0:
                     distances = [np.inf, np.inf]
 
                 pairwise_distances[i_contour, j_contour] = distances

@@ -30,7 +30,7 @@ def test_min_distance_point():
     segment = ContourSegment.from_coordinates(coordinates)
 
     point = np.asarray([15, 0])
-    assert segment.min_distance_point(point) == 5.
+    assert segment.min_distance_point(point) == 5.0
 
 
 def test_closest_point_empty():
@@ -84,14 +84,16 @@ def test_merge():
 def test_group_by_length():
     short_segment_coordinates = np.asarray([[0, 0], [1, 0]]).reshape((-1, 1, 2))
     long_segment_coordinates = np.asarray([[0, 0], [10, 0]]).reshape((-1, 1, 2))
-    contour = [ContourSegment.from_coordinates(short_segment_coordinates),
-               ContourSegment.from_coordinates(long_segment_coordinates),
-               ]
+    contour = [
+        ContourSegment.from_coordinates(short_segment_coordinates),
+        ContourSegment.from_coordinates(long_segment_coordinates),
+    ]
     long_segments, short_segments = ContourSegment.group_by_length(contour, 5.0)
     assert len(long_segments) == 1
     assert len(short_segments) == 1
     np.testing.assert_equal(long_segments[0].coordinates, long_segment_coordinates)
     np.testing.assert_equal(short_segments[0].coordinates, short_segment_coordinates)
+
 
 def test_lines_intersection():
     # Intersect (in first segment)

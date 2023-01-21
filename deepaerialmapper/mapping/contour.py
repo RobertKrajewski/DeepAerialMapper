@@ -1,10 +1,10 @@
 import math
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
-from sklearn.decomposition import PCA
+from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
+from sklearn.decomposition import PCA
 
 Contour = List["ContourSegment"]
 
@@ -35,7 +35,7 @@ class ContourSegment:
         return cls(
             coordinates=coordinates,
             center=np.mean(coordinates, axis=(0, 1)),
-            first_component=first_component
+            first_component=first_component,
         )
 
     def abs_angle_difference(self, other_segment: "ContourSegment") -> float:
@@ -61,14 +61,14 @@ class ContourSegment:
 
         x, y = point
         return np.abs(
-            (a * x - b * y + c) / (np.sqrt(a ** 2 + b ** 2))
+            (a * x - b * y + c) / (np.sqrt(a**2 + b**2))
         )  # Project point on orthogonal slope
 
     def closest_point(
-            self,
-            points: List[np.ndarray],
-            max_long_distance: float,
-            max_lat_distance: float,
+        self,
+        points: List[np.ndarray],
+        max_long_distance: float,
+        max_lat_distance: float,
     ) -> np.ndarray:
         """Find the closest point in list of points.
 
@@ -90,9 +90,9 @@ class ContourSegment:
             long, lat = self.oriented_distance_point(point)
 
             if (
-                    0 < long < max_long_distance
-                    and abs(lat) < max_lat_distance
-                    and long < min_dist
+                0 < long < max_long_distance
+                and abs(lat) < max_lat_distance
+                and long < min_dist
             ):
                 min_dist = long
                 min_dist_point = point
@@ -114,7 +114,7 @@ class ContourSegment:
 
     @staticmethod
     def group_by_length(
-            contour: "Contour", threshold_length: float
+        contour: "Contour", threshold_length: float
     ) -> Tuple["Contour", "Contour"]:
         """Group list of segments by arc length into short and long segments.
 
@@ -147,7 +147,7 @@ class ContourSegment:
         # Orientation of the line connecting the first and the last point
         start_end_orientation = np.arctan2(
             self.coordinates[-1, 0, 1] - self.coordinates[0, 0, 1],
-            self.coordinates[-1, 0, 0] - self.coordinates[0, 0, 0]
+            self.coordinates[-1, 0, 0] - self.coordinates[0, 0, 0],
         )
 
         # Make sure that the orientation points from the first to the last point
@@ -169,7 +169,7 @@ class ContourSegment:
 
         # If this segment doesn't have valid eigenvectors, no distance can be derived
         if len(ev) < 2:
-            return -1., -1.
+            return -1.0, -1.0
 
         # Project distance between centers to long and lat direction of current element
         d = o_center - center
@@ -181,12 +181,14 @@ class ContourSegment:
     def endpoint_distance(self, other_segment: "ContourSegment") -> float:
         """Calculate minimal distance from end of this segment (last point) to other segment's both end points."""
 
-        distances = [np.linalg.norm(self.coordinates[-1] - other_segment.coordinates[0]),
-                     np.linalg.norm(self.coordinates[-1] - other_segment.coordinates[-1])]
+        distances = [
+            np.linalg.norm(self.coordinates[-1] - other_segment.coordinates[0]),
+            np.linalg.norm(self.coordinates[-1] - other_segment.coordinates[-1]),
+        ]
         return min(distances)
 
     def oriented_distance_point(
-            self, point: np.ndarray, endpoint: bool = False
+        self, point: np.ndarray, endpoint: bool = False
     ) -> Tuple[float, float]:
         """Calculate longitudinal and lateral distance this segment and a point using pca.
 
@@ -200,7 +202,7 @@ class ContourSegment:
 
         # If this segment doesn't have valid eigenvectors, no distance can be derived
         if len(ev) < 2:
-            return -1., -1.
+            return -1.0, -1.0
 
         # Project distance between centers to long and lat direction of current element
         d = point - center
@@ -209,7 +211,9 @@ class ContourSegment:
 
         return long_dist, lat_dist
 
-    def intersection(self, other_segment: "ContourSegment") -> Optional[Tuple[np.ndarray, float]]:
+    def intersection(
+        self, other_segment: "ContourSegment"
+    ) -> Optional[Tuple[np.ndarray, float]]:
         """
         Approximates this and other contour by line (first and last coordinate)
         :return: Intersection point and relative location, None if segments are parallel
@@ -231,7 +235,9 @@ class ContourSegment:
         intersection_point = p + t * r
         return intersection_point, t
 
-    def intersection_image_border(self, img_shape: Tuple[int, int]) -> Tuple[Optional[np.ndarray], Optional[float]]:
+    def intersection_image_border(
+        self, img_shape: Tuple[int, int]
+    ) -> Tuple[Optional[np.ndarray], Optional[float]]:
         """Check for intersection with image borders.
 
         :param img_shape: Image shape (h,w)

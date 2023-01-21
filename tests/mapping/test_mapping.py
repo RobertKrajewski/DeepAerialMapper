@@ -7,13 +7,12 @@ import tqdm
 import yaml
 from matplotlib import pyplot as plt
 
-from deepaerialmapper.eval.mapping import (
-    evaluate_dataset,
-    evaluate_map,
-    resample_polygon,
-)
-from deepaerialmapper.mapping.contour import ContourManager, ContourSegment, compute_pca
-from deepaerialmapper.mapping.masks import BinaryMask, SemanticClass, SemanticMask
+from deepaerialmapper.eval.mapping import (evaluate_dataset, evaluate_map,
+                                           resample_polygon)
+from deepaerialmapper.mapping.contour import (ContourManager, ContourSegment,
+                                              compute_pca)
+from deepaerialmapper.mapping.masks import (BinaryMask, SemanticClass,
+                                            SemanticMask)
 from deepaerialmapper.mapping.symbol import SymbolDetector
 from tests.test_corner_split import find_split_points
 

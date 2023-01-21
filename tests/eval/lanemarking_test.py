@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from deepaerialmapper.eval.lanemarking import LanemarkingEvaluator, resample_polyline
+from deepaerialmapper.eval.lanemarking import (LanemarkingEvaluator,
+                                               resample_polyline)
 
 
 def test_resample_polygon_interpolation() -> None:
