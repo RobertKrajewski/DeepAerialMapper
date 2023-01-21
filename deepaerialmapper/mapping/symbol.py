@@ -18,6 +18,11 @@ from deepaerialmapper.mapping.semantic_mask import SemanticClass, SemanticMask
 
 class Net(nn.Module):
     def __init__(self, in_ch, out_ch):
+        """
+
+        :param in_ch:
+        :param out_ch:
+        """
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(
             in_channels=in_ch, out_channels=16, kernel_size=5, stride=2
@@ -34,6 +39,11 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(256, out_ch)
 
     def forward(self, x):
+        """
+
+        :param x:
+        :return:
+        """
         x = self.conv1(x)
         x = F.relu(x)
 
@@ -65,6 +75,14 @@ def predict(
     targets: list,
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
 ):
+    """
+
+    :param model:
+    :param image:
+    :param targets:
+    :param device:
+    :return:
+    """
     test_transforms = A.Compose(
         [
             A.Resize(height=68, width=68, p=1),
@@ -94,6 +112,10 @@ class Symbol:
     image: Optional[np.ndarray] = None
 
     def show(self):
+        """
+
+        :return:
+        """
         max_x, max_y = np.max(self.contour, axis=(0, 1))
         img = np.zeros((max_y + 10, max_x + 10), np.uint8)
         img = cv2.polylines(
@@ -108,6 +130,11 @@ class Symbol:
 
 class SymbolDetector:
     def __init__(self, symbols: List[str], weight_filepath: str) -> None:
+        """
+
+        :param symbols:
+        :param weight_filepath:
+        """
 
         self._patterns = symbols  # order of the list is important.
         logger.info(f"Loaded patterns: {self._patterns}")
@@ -123,6 +150,10 @@ class SymbolDetector:
         )
 
     def _load_symbols(self):
+        """
+
+        :return:
+        """
         """Load symbols from disk"""
 
         symbols = []
@@ -157,6 +188,12 @@ class SymbolDetector:
         return symbols
 
     def extract_ref(self, cnts, debug=False):
+        """
+
+        :param cnts:
+        :param debug:
+        :return:
+        """
         """Extract 2 reference points from contour"""
 
         epsilon = 0.008 * cv2.arcLength(cnts, True)
@@ -194,6 +231,15 @@ class SymbolDetector:
         debug: bool = False,
         dbg_rescale: float = 0.75,
     ) -> List[Symbol]:
+        """
+
+        :param seg_mask:
+        :param min_area:
+        :param max_area:
+        :param debug:
+        :param dbg_rescale:
+        :return:
+        """
         """
         using shape match to classify the detected symbol
         load symbol template and compare the detected ones with them, find the most likely one.
@@ -240,6 +286,13 @@ class SymbolDetector:
         return detections
 
     def classify(self, symbol_cnt: List[np.ndarray], mask, scale=255):
+        """
+
+        :param symbol_cnt:
+        :param mask:
+        :param scale:
+        :return:
+        """
         tx, ty, hori, verti = cv2.boundingRect(symbol_cnt)
         roi = ty, ty + verti, tx, tx + hori
         symbol_mask = mask.class_mask(SemanticClass.SYMBOL)
