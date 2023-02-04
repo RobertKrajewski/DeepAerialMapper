@@ -1,0 +1,30 @@
+palette:
+  - type: BLACK
+    color: [0, 0, 0]
+  - type: ROAD
+    color: [128, 128, 128]
+  - type: VEGETATION
+    color: [0, 255, 0]
+  - type: TRAFFICISLAND
+    color: [153, 51, 255]
+  - type: SIDEWALK
+    color: [0, 0, 255]
+  - type: PARKING
+    color: [255, 255, 0]
+  - type: SYMBOL
+    color: [255, 0, 0]
+  - type: LANEMARKING
+    color: [0, 128, 128]
+  # type: object name
+  # color: RGB masking color of the object
+
+symbol_detector:
+  symbols:
+    - Left
+    - Left_Right
+    - Right
+    - Straight
+    - Straight_Left
+    - Straight_Right
+    - Unknown
+  weight_filepath: configs/symbol_weights.pt

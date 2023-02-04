@@ -5,17 +5,17 @@
 
 ## Introduction
 
-HD maps are essential for the development, safety validation and operation of highly automated vehicles. Central challenges in the creation of HD maps are the efficient collection of up-to-date data of roads and deriving of accurate maps from the recorded sensor data. 
-Typically used approaches including dedicated measurement vehicles and crowd-sourced data from series-production vehicles are mostly only commercially viable. High-resolution aerial imagery is an alternative that is available cheaply or even free of charge, but requires significant time and effort to be turned into maps manually. We therefore present an approach for the semi-automatic creation of HD maps from high-resolution aerial imagery. For this purpose, we train neural networks to semantically segment aerial images into HD map-relevant classes. The resulting segmentation is hierarchically post-processed to obtain a prototypical HD map of the visible road elements. By exporting the map to the [lanelet2](https://www.mrt.kit.edu/z/publ/download/2018/Poggenhans2018Lanelet2.pdf) format, it can be easily extended for the intended use cases by common tools. The time savings resulting from this show the potential of the proposed method as a scalable solution to create HD maps.
+The creation of HD maps is crucial for the success of highly automated vehicles, but it faces obstacles such as the need for updated road data and accuracy in mapping. The conventional methods of obtaining road data through dedicated measurement vehicles or crowd-sourced data from series-production vehicles are costly. On the other hand, high-resolution aerial imagery is cost-effective or even free, but requires extensive manual work to create maps. To overcome this, we propose a semi-automatic approach to creating HD maps using high-resolution aerial imagery. This method involves training neural networks to semantically segment aerial images and obtain a prototypical HD map of the road elements. The map can then be easily modified for specific use cases through common tools, which is made possible by exporting the map in the [lanelet2](https://www.mrt.kit.edu/z/publ/download/2018/Poggenhans2018Lanelet2.pdf) format. This efficient method has the potential to become a scalable solution for HD map creation.
+
 
 This work is based on our *paper*. You can find arXiv version of the paper here [TODO: ADD link]. </br>
 
 ## Architecture
-The algorithm consists of 4 parts.
-1. extracting lanelets (road contours, lane)
-2. grouping lanelets
-3. classifying symbols
-4. generating hdmap in lanelet2 format.
+The algorithm consists of 4 steps.
+1. Extracting lanelets (road contours, lane)
+2. Grouping lanelets
+3. Classifying symbols
+4. Generating hdmap in lanelet2 format using the output from step 2 and 3.
 
 ## Tutorial
 
@@ -35,9 +35,9 @@ pip install -v -e .
 # thus any local modifications made to the code will take effect without reinstallation.
 ```
 
-2. Verify the installation
+2. Run DAM with demo sample
 ```bash
-python3 tools/create_maps.py data/seg_masks
+python3 tools/create_maps.py
 ```
 
 3. Check the output directory: `results/maps/{date_time}`

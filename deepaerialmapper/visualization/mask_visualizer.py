@@ -3,6 +3,7 @@ from typing import Tuple
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import List
 
 from deepaerialmapper.mapping.binary_mask import BinaryMask
 from deepaerialmapper.mapping.lanemarking import Lanemarking
@@ -22,7 +23,7 @@ class MaskVisualizer:
         window_name: str = "",
         random: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        from deepaerialmapper.mapping.contour import ContourManager
+        from deepaerialmapper.mapping.contour_manager import ContourManager
 
         if isinstance(contours, ContourManager):
             contours = contours.contours
@@ -100,7 +101,14 @@ class MaskVisualizer:
         self._fig.canvas.draw()
 
     @staticmethod
-    def _draw_contours(contours, img_c, random):
+    def _draw_contours(contours: List[np.ndarray], img_c: np.ndarray, random: bool):
+        """
+        draw contours.
+
+        :param contours: List of contours to draw.
+        :param img_c: images in numpy array.
+        :param random: random colors are selected if random is True.
+        """
         lines = []
         points = []
         texts = []
@@ -160,7 +168,17 @@ class MaskVisualizer:
         return img_c
 
     @staticmethod
-    def _draw_lanemarkings(img_c, lanemarkings, random):
+    def _draw_lanemarkings(
+        img_c: np.ndarray, lanemarkings: List[np.ndarray], random: bool
+    ):
+        """
+        draw lanemarkings.
+
+        :param img_c: images in numpy array.
+        :param lanemarkings: List of contours to draw.
+        :param random: random colors are selected if random is True.
+        """
+
         lines = []
         points = []
         texts = []
