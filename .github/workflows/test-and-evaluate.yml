@@ -1,0 +1,59 @@
+name: Test and evaluate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+        pip install -e .
+
+    - name: Run tests
+      run: pytest tests/
+
+  evaluate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+          pip install -e .
+
+      - name: Run evaluation on groundtruth data
+        run: |
+          python bin/create_maps.py --output-dir=results/maps/paper_groundtruth configs/paper_groundtruth.yaml
+          python bin/evaluate_lanemarkings.py data/paper/lane_annotations results/maps/paper_groundtruth
+
+      - name: Run evaluation on prediction data
+        run: |
+          python bin/create_maps.py --output-dir=results/maps/paper_prediction configs/paper_prediction.yaml
+          python bin/evaluate_lanemarkings.py data/paper/lane_annotations results/maps/paper_prediction

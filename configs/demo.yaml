@@ -1,0 +1,41 @@
+# Path to directory containing segmentation masks (*.png) using the palette described below.
+mask_dir_path: data/demo/seg_masks
+
+# Path to meta file (.yaml) containing information like long/lat coordinates of every mask.
+meta_filepath: data/demo/meta.yaml
+
+# Path to file describing seg mask regions to be ignored while processing.
+ignore_regions_filepath: data/demo/ignore_regions.json
+
+
+palette:
+  - type: BLACK
+    color: [0, 0, 0]
+  - type: ROAD
+    color: [128, 128, 128]
+  - type: VEGETATION
+    color: [0, 255, 0]
+  - type: TRAFFICISLAND
+    color: [153, 51, 255]
+  - type: SIDEWALK
+    color: [0, 0, 255]
+  - type: PARKING
+    color: [255, 255, 0]
+  - type: SYMBOL
+    color: [255, 0, 0]
+  - type: LANEMARKING
+    color: [0, 128, 128]
+  # type: object name
+  # color: RGB masking color of the object
+
+
+symbol_detector:
+  symbols_names:
+    - Arrow_Left
+    - Arrow_Left_Right
+    - Arrow_Right
+    - Arrow_Straight
+    - Arrow_Straight_Left
+    - Arrow_Straight_Right
+    - Unknown
+  classifier_weight_filepath: data/symbol_classifier_weights.pt
