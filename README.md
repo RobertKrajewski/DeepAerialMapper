@@ -15,7 +15,7 @@ In the second step, a prototypical HD map is derived from this semantic mask by 
 The code in this repository contains all the code for the second step.
 Since the resulting map is exported in the [lanelet2](https://www.mrt.kit.edu/z/publ/download/2018/Poggenhans2018Lanelet2.pdf) format, it can then be easily viewed and modified through common tools such as [JOSM](https://josm.openstreetmap.de/).
 
-This work is based on our *paper*. You can find arXiv version of the paper here [TODO: ADD link]. </br>
+This work is based on our *paper*. You can find [arXiv version of the paper here](https://www.arxiv.org/abs/2410.00769)  </br>
 
 ### Get Started
 
@@ -79,15 +79,15 @@ demo
 ```
 % Paper
 @misc{dam2024paper,
-    title={{DeepAerialMapper}: semi-automatically convert segmentation masks of aerial imagery into High-Definition maps},
+    title={{DeepAerialMapper}: Deep Learning-based Semi-automatic HD Map Creation for Highly Automated Vehicles},
     author={Robert Krajewski, Huijo Kim},
-    howpublished = {\url{https://github.com/RobertKrajewski/DeepAerialMapper}},
+    howpublished = {\url{https://www.arxiv.org/abs/2410.00769}},
     year={2024}
 }
 
 % Code
 @misc{dam2024code,
-    title={{DeepAerialMapper}: semi-automatically convert segmentation masks of aerial imagery into High-Definition maps},
+    title={{DeepAerialMapper}: Semi-Automatically Convert Segmentation Masks of Aerial Imagery into High-Definition Maps},
     author={Robert Krajewski, Huijo Kim},
     howpublished = {\url{https://github.com/RobertKrajewski/DeepAerialMapper}},
     year={2024}
